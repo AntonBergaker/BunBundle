@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,7 +29,9 @@ namespace MonogameTexturePacker {
             subImages = new List<PictureBox>();
 
             if (arguments.Length == 1) {
-                LoadFolder(arguments[0]);
+                string path = arguments[0];
+                path = new FileInfo(path).FullName;
+                LoadFolder(path);
             }
         }
 
