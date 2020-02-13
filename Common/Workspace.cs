@@ -34,34 +34,30 @@ namespace MonogameTexturePacker {
             return sprites;
         }
 
-        private (bool hasChild, WorkspaceFolder folder) GetWorkspaceFolder(string path) {
+        private WorkspaceFolder GetWorkspaceFolder(string path) {
             bool hasChild = false;
             List<WorkspaceFolder> subFolders = new List<WorkspaceFolder>();
             List<Sprite> files = new List<Sprite>();
             foreach (string dir in Directory.GetDirectories(path)) {
                 if (Directory.GetFiles(dir, "*.spr").Length > 0) {
-                    hasChild = true;
                     files.Add(new Sprite(Path.GetFileName(dir), dir));
                     continue;
                 }
 
-                (bool subHasChild, WorkspaceFolder sub) = GetWorkspaceFolder(dir);
-                if (subHasChild) {
-                    hasChild = true;
-                    subFolders.Add(sub);
-                }
+                WorkspaceFolder sub = GetWorkspaceFolder(dir);
+                subFolders.Add(sub);
             }
 
-            return (hasChild, hasChild ? new WorkspaceFolder(Path.GetFileName(path), path, subFolders, files) : null);
+            return new WorkspaceFolder(Path.GetFileName(path), path, subFolders, files);
         }
 
         public void OpenFolder(string folder) {
             string[] files = Directory.GetFiles(folder, "sprites.sprm");
             if (files.Length >= 1) {
-                OpenFile(files[0]);
+                OpenProjectFile(files[0]);
             }
 
-            (_, RootFolder) = GetWorkspaceFolder(folder);
+            RootFolder = GetWorkspaceFolder(folder);
 
             if (RootFolder == null) {
                 RootFolder = new WorkspaceFolder(Path.GetFileName(folder), folder, new List<WorkspaceFolder>(), new List<Sprite>());
@@ -69,8 +65,13 @@ namespace MonogameTexturePacker {
         }
 
         public void OpenFile(string file) {
+            OpenFolder(Path.GetDirectoryName(file));
+        }
+
+        private void OpenProjectFile(string file) {
             JObject obj = JObject.Parse(File.ReadAllText(file));
             targetFolder = (string)obj["targetDirectory"];
+            targetFolder = targetFolder.Replace('\\', Path.DirectorySeparatorChar);
         }
 
 
@@ -88,11 +89,11 @@ namespace MonogameTexturePacker {
             RaiseImportSprite(pasteTarget, spr);
         }
 
-        public void Build() {
+        public void Build(string mgcbPath) {
 
             Builder builder = new Builder();
 
-            builder.Build(GetAllSprites(), RootFolder.path, targetFolder);
+            builder.Build(GetAllSprites(), RootFolder.path, targetFolder, mgcbPath);
 
         }
 

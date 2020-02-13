@@ -23,13 +23,16 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderView = new System.Windows.Forms.TreeView();
+            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.confirmNewName = new System.Windows.Forms.Button();
             this.nameBox = new System.Windows.Forms.TextBox();
             this.subFramesPreview = new System.Windows.Forms.FlowLayoutPanel();
             this.originY = new System.Windows.Forms.NumericUpDown();
@@ -39,7 +42,7 @@
             this.openSpriteDialog = new System.Windows.Forms.OpenFileDialog();
             this.buttonAddFolder = new System.Windows.Forms.Button();
             this.buttonBuild = new System.Windows.Forms.Button();
-            this.confirmNewName = new System.Windows.Forms.Button();
+            this.originSelectionDropdown = new System.Windows.Forms.ComboBox();
             this.imagePreview = new MonogameTexturePacker.PreviewImage();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -89,11 +92,22 @@
             this.folderView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.folderView.FullRowSelect = true;
+            this.folderView.ImageIndex = 0;
+            this.folderView.ImageList = this.imageList1;
             this.folderView.Location = new System.Drawing.Point(3, 3);
             this.folderView.Name = "folderView";
+            this.folderView.SelectedImageIndex = 0;
             this.folderView.Size = new System.Drawing.Size(245, 451);
             this.folderView.TabIndex = 1;
             this.folderView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.FolderView_AfterSelect);
+            // 
+            // imageList1
+            // 
+            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
+            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList1.Images.SetKeyName(0, "blank.png");
+            this.imageList1.Images.SetKeyName(1, "folder.png");
             // 
             // splitContainer1
             // 
@@ -109,6 +123,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.originSelectionDropdown);
             this.splitContainer1.Panel2.Controls.Add(this.confirmNewName);
             this.splitContainer1.Panel2.Controls.Add(this.nameBox);
             this.splitContainer1.Panel2.Controls.Add(this.subFramesPreview);
@@ -118,6 +133,17 @@
             this.splitContainer1.Size = new System.Drawing.Size(761, 454);
             this.splitContainer1.SplitterDistance = 251;
             this.splitContainer1.TabIndex = 3;
+            // 
+            // confirmNewName
+            // 
+            this.confirmNewName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.confirmNewName.Location = new System.Drawing.Point(419, 403);
+            this.confirmNewName.Name = "confirmNewName";
+            this.confirmNewName.Size = new System.Drawing.Size(75, 23);
+            this.confirmNewName.TabIndex = 9;
+            this.confirmNewName.Text = "Apply";
+            this.confirmNewName.UseVisualStyleBackColor = true;
+            this.confirmNewName.Click += new System.EventHandler(this.confirmNewName_Click);
             // 
             // nameBox
             // 
@@ -217,16 +243,26 @@
             this.buttonBuild.UseVisualStyleBackColor = true;
             this.buttonBuild.Click += new System.EventHandler(this.ButtonBuild_Click);
             // 
-            // confirmNewName
+            // originSelectionDropdown
             // 
-            this.confirmNewName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.confirmNewName.Location = new System.Drawing.Point(419, 403);
-            this.confirmNewName.Name = "confirmNewName";
-            this.confirmNewName.Size = new System.Drawing.Size(75, 23);
-            this.confirmNewName.TabIndex = 9;
-            this.confirmNewName.Text = "Apply";
-            this.confirmNewName.UseVisualStyleBackColor = true;
-            this.confirmNewName.Click += new System.EventHandler(this.confirmNewName_Click);
+            this.originSelectionDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.originSelectionDropdown.FormattingEnabled = true;
+            this.originSelectionDropdown.Items.AddRange(new object[] {
+            "Custom",
+            "Top Left",
+            "Top Center",
+            "Top Right",
+            "Middle Left",
+            "Middle Center",
+            "Middle Right",
+            "Bot Left",
+            "Bot Center",
+            "Bot Right"});
+            this.originSelectionDropdown.Location = new System.Drawing.Point(255, 430);
+            this.originSelectionDropdown.Name = "originSelectionDropdown";
+            this.originSelectionDropdown.Size = new System.Drawing.Size(121, 21);
+            this.originSelectionDropdown.TabIndex = 10;
+            this.originSelectionDropdown.SelectedIndexChanged += new System.EventHandler(this.originSelectionDropdown_SelectedIndexChanged);
             // 
             // imagePreview
             // 
@@ -289,6 +325,8 @@
         private System.Windows.Forms.Button buttonBuild;
         private System.Windows.Forms.TextBox nameBox;
         private System.Windows.Forms.Button confirmNewName;
+        private System.Windows.Forms.ImageList imageList1;
+        private System.Windows.Forms.ComboBox originSelectionDropdown;
     }
 }
 

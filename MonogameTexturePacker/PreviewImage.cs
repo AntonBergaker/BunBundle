@@ -16,7 +16,6 @@ namespace MonogameTexturePacker {
 
         protected override void OnBackgroundImageChanged(EventArgs e) {
             base.OnBackgroundImageChanged(e);
-            Console.WriteLine("HI");
         }
 
         public void UpdateImage(string path) {
@@ -32,8 +31,15 @@ namespace MonogameTexturePacker {
             fuckYouImageBox.Tick += Timer_Tick;
         }
 
+        public override void Refresh() {
+            base.Refresh();
+            fuckYouImageBox = new Timer();
+            fuckYouImageBox.Start();
+            fuckYouImageBox.Tick += Timer_Tick;
+        }
+
         private void Timer_Tick(object sender, EventArgs e) {
-            Invalidate();
+            base.Invalidate();
             fuckYouImageBox.Stop();
         }
 

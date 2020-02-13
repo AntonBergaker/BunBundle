@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using io = System.IO;
 using System.IO;
 using System.Linq;
@@ -47,6 +48,25 @@ namespace MonogameTexturePacker {
                 _originY = value;
             }
         }
+
+        public int Width {
+            get {
+                Image image = Image.FromFile(ImageAbsolutePaths[0]);
+                int width = image.Width;
+                image.Dispose();
+                return width;
+            }
+        }
+
+        public int Height {
+            get {
+                Image image = Image.FromFile(ImageAbsolutePaths[0]);
+                int height = image.Height;
+                image.Dispose();
+                return height;
+            }
+        }
+
         public string[] ImagePaths;
         public bool Unsaved { private set; get; }
 

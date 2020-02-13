@@ -3,6 +3,9 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -12,9 +15,38 @@ using System.Threading.Tasks;
 namespace MonogameTexturePacker {
     class Builder {
 
+        /// <summary>
+        /// Resize the image to the specified width and height.
+        /// </summary>
+        /// <param name="image">The image to resize.</param>
+        /// <param name="width">The width to resize to.</param>
+        /// <param name="height">The height to resize to.</param>
+        /// <returns>The resized image.</returns>
+        public static Bitmap ResizeImage(Image image, int width, int height) {
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage)) {
+                graphics.CompositingMode = CompositingMode.SourceCopy;
+                graphics.CompositingQuality = CompositingQuality.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                using (var wrapMode = new ImageAttributes()) {
+                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
+        }
 
 
-        public void Build(Sprite[] sprites, string rootFolder, string targetFolder) {
+
+        public void Build(Sprite[] sprites, string rootFolder, string targetFolder, string MgcbPath) {
             Sprite[] allSprites = sprites;
             string fullTargetFolder = Path.Combine(rootFolder, targetFolder);
 
@@ -60,6 +92,7 @@ namespace MonogameTexturePacker {
                 }
             }
 
+            /*
             // Create a file containing all images to process for magick
             string magickFile = Path.Combine(cacheFolder, "resizeme.txt");
             File.WriteAllLines(magickFile, exportSprites.Values.Where(x => x.IsCached == false).Select(x => x.FilePath));
@@ -79,14 +112,36 @@ namespace MonogameTexturePacker {
 
             }
 
-            processes.Each(x => x.WaitForExit());
+            processes.Each(x => x.WaitForExit());*/
+
+            foreach (SpriteExportData spriteData in exportSprites.Values) {
+                if (spriteData.IsCached) {
+                    continue;
+                }
+
+                Image image = Image.FromFile(spriteData.FilePath);
+
+                double height = image.Height;
+                double width = image.Width;
+
+                for (int i = 1; i < mips.Length; i++) {
+                    height /= 2;
+                    width /= 2;
+                    Bitmap resizedImage = ResizeImage(image, (int)width, (int)height);
+                    resizedImage.Save(Path.Combine(cacheFolder, mips[i], spriteData.Name));
+                    resizedImage.Dispose();
+                }
+
+                image.Dispose();
+            }
+
 
             // Run the MGCB
             string contentPath = Path.Combine(fullTargetFolder, "Content", "TempContent.mgcb");
             Console.WriteLine("NEW PATH: " + contentPath);
             string defaultProperties = string.Join("\r\n",
-                "/outputDir:bin/DesktopGL/Content",
-                "/intermediateDir:obj/Windows",
+                "/outputDir:bin/Content",
+                "/intermediateDir:obj/Content",
                 "/platform:Windows",
                 "/config:",
                 "/profile:Reach",
@@ -97,7 +152,7 @@ namespace MonogameTexturePacker {
             // Build the file
             File.WriteAllText(contentPath, defaultProperties + string.Join("", allSprites.Select(x => x.GeneratePackingCode(cacheFolder, mips)).ToArray()));
 
-            ProcessStartInfo mgcbInfo = new ProcessStartInfo("C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\MGCB.exe", contentPath);
+            ProcessStartInfo mgcbInfo = new ProcessStartInfo(MgcbPath, contentPath);
             mgcbInfo.WorkingDirectory = Path.Combine(fullTargetFolder, "Content");
             mgcbInfo.UseShellExecute = false;
             // Run the exporter

@@ -56,6 +56,9 @@ namespace MonogameTexturePacker {
             files.Each((x,i) => treeToSprite.Add(x, folder.files[i]));
 
             TreeNode newNode = new TreeNode(folder.name, subFolders.Concat(files).ToArray());
+            newNode.ImageIndex = 1;
+            newNode.SelectedImageIndex = 1;
+
             folderToTree.Add(folder, newNode);
             
             return newNode;
@@ -93,6 +96,39 @@ namespace MonogameTexturePacker {
             }
 
             nameBox.Text = selectedSprite.Name;
+            UpdateOriginSelection();
+        }
+
+        private void UpdateOriginSelection() {
+            int imageWidth = selectedSprite.Width-1;
+            int imageHeight = selectedSprite.Height-1;
+
+            int widthIndex = -1;
+
+            if (imageWidth == 0) {
+                widthIndex = 0;
+            } else if (imageWidth == (int)selectedSprite.OriginX / 2) {
+                widthIndex = 1;
+            } else if (imageWidth == (int)selectedSprite.OriginX) {
+                widthIndex = 2;
+            }
+
+            int heightIndex = -1;
+
+            if (imageHeight == 0) {
+                widthIndex = 0;
+            } else if (imageHeight == (int)selectedSprite.OriginY / 2) {
+                widthIndex = 1;
+            } else if (imageHeight == (int)selectedSprite.OriginY) {
+                widthIndex = 2;
+            }
+
+            if (widthIndex == -1 || heightIndex == -1) {
+                originSelectionDropdown.SelectedIndex = 0;
+            }
+            else {
+                originSelectionDropdown.SelectedIndex = 1 + widthIndex + heightIndex * 3;
+            }
         }
 
         public void LoadFolder(string path) {
@@ -152,16 +188,18 @@ namespace MonogameTexturePacker {
 
         private void OriginX_ValueChanged(object sender, EventArgs e) {
             selectedSprite.OriginX = (float)originX.Value;
+            UpdateOriginSelection();
             imagePreview.Refresh();
         }
 
         private void OriginY_ValueChanged(object sender, EventArgs e) {
             selectedSprite.OriginY = (float)originY.Value;
+            UpdateOriginSelection();
             imagePreview.Refresh();
         }
 
         private void ButtonBuild_Click(object sender, EventArgs e) {
-            workspace.Build();
+            workspace.Build("C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\MGCB.exe");
         }
 
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -180,6 +218,22 @@ namespace MonogameTexturePacker {
                 confirmNewName.PerformClick();
                 e.Handled = true;
             }
+        }
+
+
+        private void originSelectionDropdown_SelectedIndexChanged(object sender, EventArgs e) {
+            int index = originSelectionDropdown.SelectedIndex - 1;
+            if (index == -1) {
+                return;
+            }
+            int wIndex = index % 3;
+            int hIndex = index / 3;
+
+            selectedSprite.OriginX = (selectedSprite.Width -1) * wIndex / 2;
+            selectedSprite.OriginY = (selectedSprite.Height-1) * hIndex / 2;
+
+            originX.Value = (int)selectedSprite.OriginX;
+            originY.Value = (int)selectedSprite.OriginY;
         }
     }
 }
