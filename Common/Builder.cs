@@ -92,27 +92,6 @@ namespace MonogameTexturePacker {
                 }
             }
 
-            /*
-            // Create a file containing all images to process for magick
-            string magickFile = Path.Combine(cacheFolder, "resizeme.txt");
-            File.WriteAllLines(magickFile, exportSprites.Values.Where(x => x.IsCached == false).Select(x => x.FilePath));
-
-            // Resize the sprites
-            ProcessStartInfo resizeInfo = new ProcessStartInfo("\"C:\\Program Files\\ImageMagick-7.0.9-Q16\\magick.exe\"");
-            resizeInfo.WorkingDirectory = cacheFolder;
-            resizeInfo.UseShellExecute = true;
-            resizeInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            List<Process> processes = new List<Process>();
-
-            for (int i = 1; i < mips.Length; i++) {
-                resizeInfo.Arguments =
-                    $"@resizeme.txt -resize {sizes[i]} -set filename:original %t {cacheFolder}\\{mips[i]}\\%[filename:original].png";
-                Process process = Process.Start(resizeInfo);
-                processes.Add(process);
-
-            }
-
-            processes.Each(x => x.WaitForExit());*/
 
             foreach (SpriteExportData spriteData in exportSprites.Values) {
                 if (spriteData.IsCached) {

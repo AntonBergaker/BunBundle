@@ -164,7 +164,7 @@ namespace MonogameTexturePacker {
             string[] relativePaths = sourcePaths.Select((_, i) => name + i + ".png").ToArray();
             string[] imagePaths = sourcePaths.Select((_, i) => io.Path.Combine(folder, "img", relativePaths[i])).ToArray();
 
-            sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i]));
+            sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i], true));
             
             Sprite spr = new Sprite(name, folder, relativePaths);
             spr.Save();
