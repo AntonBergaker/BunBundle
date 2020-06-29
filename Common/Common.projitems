@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Builder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CodeBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WorkspaceFolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IWorkspaceItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UpdatedSpritesData.cs" />

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
 
 namespace MonogameTexturePacker {
     class Builder {
@@ -46,8 +47,8 @@ namespace MonogameTexturePacker {
 
 
 
-        public void Build(Sprite[] sprites, string rootFolder, string targetFolder, string MgcbPath) {
-            Sprite[] allSprites = sprites;
+        public void Build(WorkspaceFolder workspaceFolder, string rootFolder, string targetFolder, string MgcbPath) {
+            Sprite[] allSprites = workspaceFolder.GetAllSprites().ToArray();
             string fullTargetFolder = Path.Combine(rootFolder, targetFolder);
 
             string cacheFolder = Path.GetFullPath(Path.Combine(rootFolder, "..", "__build_cache"));
@@ -140,33 +141,20 @@ namespace MonogameTexturePacker {
 
             // Build the importer class
 
-            StringBuilder importerClass = new StringBuilder(
-               string.Join("\r\n", new[] {
-                    "using Microsoft.Xna.Framework;",
-                    "using Microsoft.Xna.Framework.Content;",
-                    "namespace Autocute.Engine {",
-                    "\tstatic public partial class Sprites {\r\n",
-                })
+            CodeBuilder importerClass = new CodeBuilder();
+
+            importerClass.AddLines(
+                "using Microsoft.Xna.Framework;",
+                "using Microsoft.Xna.Framework.Content;",
+                "namespace Autocute.Engine {"
             );
 
-            allSprites.Each(x => importerClass.AppendLine($"\t\tpublic static Sprite {Utils.FirstLetterToUpper(x.Name)} {{private set; get;}}"));
-            importerClass.AppendLine();
-            importerClass.AppendLine("\t\tstatic private void ImportSprites(ContentManager content) {");
+            importerClass.Indent();
 
-            foreach (Sprite spr in allSprites) {
-                importerClass.AppendLine($"\t\t\t{Utils.FirstLetterToUpper(spr.Name)} = MakeSprite(content, ");
-                importerClass.AppendLine($"\t\t\t\tnew Vector2({spr.OriginX}, {spr.OriginY}),");
-                for (int i = 0; i < spr.ImagePaths.Length; i++) {
-                    importerClass.AppendLine($"\t\t\t\t\"{spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
-                }
+            BuildClassContent(importerClass, workspaceFolder, true);
 
-                importerClass.AppendLine("\t\t\t);");
-                importerClass.AppendLine();
-            }
-
-            importerClass.AppendLine("\t\t}");
-            importerClass.AppendLine("\t}");
-            importerClass.AppendLine("}");
+            importerClass.Unindent();
+            importerClass.AddLine("}");
 
             File.WriteAllText(Path.Combine(fullTargetFolder, "Generated", "SpriteLibrary.cs"), importerClass.ToString());
 
@@ -177,6 +165,53 @@ namespace MonogameTexturePacker {
             Dictionary<string, string> hashDict = new Dictionary<string, string>();
             exportSprites.Values.Each(x => hashDict.Add(x.SourcePath, x.Hash));
             SaveImageHashes(cacheFolder, hashDict);
+        }
+
+        private void BuildClassContent(CodeBuilder importerClass, WorkspaceFolder folder, bool isRoot) {
+            if (isRoot) {
+                importerClass.AddLine("public static partial class Sprites {");
+            }
+            else {
+                importerClass.AddLine($"public static class {Utils.FirstLetterToUpper(folder.name)} {{");
+            }
+
+            importerClass.Indent();
+
+            foreach (WorkspaceFolder childFolder in folder.subFolders) {
+                BuildClassContent(importerClass, childFolder, false);
+            }
+
+            foreach (Sprite sprite in folder.files) {
+               importerClass.AddLine($"public static Sprite {Utils.FirstLetterToUpper(sprite.Name)} {{private set; get;}}");
+            }
+
+            importerClass.AddLine("");
+            importerClass.AddLine("internal static void ImportSprites(ContentManager content) {");
+            importerClass.Indent();
+
+            foreach (WorkspaceFolder childFolder in folder.subFolders) {
+                importerClass.AddLine($"{Utils.FirstLetterToUpper(childFolder.name)}.ImportSprites(content);");
+            }
+
+            if (folder.subFolders.Count > 0) {
+                importerClass.AddLine("");
+            }
+
+            foreach (Sprite spr in folder.files) {
+                importerClass.AddLine($"{Utils.FirstLetterToUpper(spr.Name)} = MakeSprite(content, ");
+                importerClass.Indent();
+                importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
+                for (int i = 0; i < spr.ImagePaths.Length; i++) {
+                    importerClass.AddLine($"\"{spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
+                }
+                importerClass.Unindent();
+                importerClass.AddLine(");");
+                importerClass.AddLine("");
+            }
+            importerClass.Unindent();
+            importerClass.AddLine("}");
+            importerClass.Unindent();
+            importerClass.AddLine("}");
         }
 
 

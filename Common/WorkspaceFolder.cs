@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Common;
 
@@ -15,6 +16,15 @@ namespace MonogameTexturePacker {
             this.path = path;
             this.subFolders = subFolders;
             this.files = files;
+        }
+
+        public IEnumerable<Sprite> GetAllSprites() {
+            IEnumerable<Sprite> sprites = files;
+            foreach (WorkspaceFolder folder in subFolders) {
+                sprites = sprites.Concat(folder.GetAllSprites());
+            }
+
+            return sprites;
         }
     }
 }

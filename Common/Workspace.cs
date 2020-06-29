@@ -28,16 +28,7 @@ namespace MonogameTexturePacker {
 
 
         private Sprite[] GetAllSprites() {
-            return GetAllSprites(RootFolder).ToArray();
-        }
-
-        private IEnumerable<Sprite> GetAllSprites(WorkspaceFolder rootFolder) {
-            IEnumerable<Sprite> sprites = rootFolder.files;
-            foreach (WorkspaceFolder folder in rootFolder.subFolders) {
-                sprites = sprites.Concat(GetAllSprites(folder));
-            }
-
-            return sprites;
+            return RootFolder.GetAllSprites().ToArray();
         }
 
         private WorkspaceFolder GetWorkspaceFolder(string path) {
@@ -124,7 +115,7 @@ namespace MonogameTexturePacker {
 
             Builder builder = new Builder();
 
-            builder.Build(GetAllSprites(), RootFolder.path, targetFolder, mgcbPath);
+            builder.Build(RootFolder, RootFolder.path, targetFolder, mgcbPath);
 
         }
 
