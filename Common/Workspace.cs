@@ -11,13 +11,19 @@ using Newtonsoft.Json.Linq;
 namespace MonogameTexturePacker {
     public class Workspace {
         private string basePath;
-        private WorkspaceFolder selectedFolder;
+        public WorkspaceFolder SelectedFolder { get; set; }
         private string targetFolder;
 
         public WorkspaceFolder RootFolder { protected set; get; }
+
+        public bool Unsaved => updatedSprites.Count > 0;
+
         private string SaveFilePath => Path.Combine(RootFolder.path, "sprites.sprm");
 
+        private readonly Dictionary<Sprite, UpdatedSpritesData> updatedSprites;
+
         public Workspace() {
+            updatedSprites = new Dictionary<Sprite, UpdatedSpritesData>();
         }
 
 
@@ -40,7 +46,7 @@ namespace MonogameTexturePacker {
             List<Sprite> files = new List<Sprite>();
             foreach (string dir in Directory.GetDirectories(path)) {
                 if (Directory.GetFiles(dir, "*.spr").Length > 0) {
-                    files.Add(new Sprite(Path.GetFileName(dir), dir));
+                    files.Add(new Sprite(Path.GetFileName(dir), dir, this));
                     continue;
                 }
 
@@ -78,15 +84,40 @@ namespace MonogameTexturePacker {
         public void ImportSprites(string[] paths) {
             // Copy the file into the folder
 
-            WorkspaceFolder pasteTarget = selectedFolder ?? RootFolder;
+            WorkspaceFolder pasteTarget = SelectedFolder ?? RootFolder;
 
             string newName = Path.GetFileNameWithoutExtension(paths[0]);
 
-            Sprite spr = Sprite.Create(newName, paths, pasteTarget.path);
+            Sprite spr = Sprite.Create(newName, paths, pasteTarget.path, this);
 
             pasteTarget.files.Add(spr);
 
             RaiseImportSprite(pasteTarget, spr);
+        }
+
+        public void CreateFolder() {
+
+            WorkspaceFolder pasteTarget = SelectedFolder ?? RootFolder;
+
+            string newName = "New Folder";
+
+            for (int i = 0; i < 999; i++) {
+                if (pasteTarget.subFolders.Any(x => x.name.Equals(newName, StringComparison.CurrentCultureIgnoreCase))) {
+                    newName = "New Folder(" + i + ")";
+                    continue;
+                }
+
+                break;
+            }
+
+            WorkspaceFolder folder = new WorkspaceFolder(newName, Path.Combine(pasteTarget.path, newName), new List<WorkspaceFolder>(), new List<Sprite>());
+            if (!Directory.Exists(folder.path)) {
+                Directory.CreateDirectory(folder.path);
+            }
+
+            pasteTarget.subFolders.Add(folder);
+
+            RaiseAddFolder(pasteTarget, folder);
         }
 
         public void Build(string mgcbPath) {
@@ -97,6 +128,35 @@ namespace MonogameTexturePacker {
 
         }
 
+        private void MoveFiles(Sprite sprite, string oldDirectory, string newDirectory) {
+
+            if (Directory.Exists(newDirectory) == false) {
+                Directory.CreateDirectory(newDirectory);
+            }
+
+            string newImgDir = Path.Combine(newDirectory, "img");
+
+            if (!Directory.Exists(newImgDir)) {
+                Directory.CreateDirectory(newImgDir);
+            }
+
+            string oldName = Path.GetFileName(oldDirectory);
+            string newName = Path.GetFileName(newDirectory);
+
+            File.Move(Path.Combine(oldDirectory, oldName) + ".spr", Path.Combine(newDirectory, newName) + ".spr");
+
+            string[] absolutePaths = sprite.ImageAbsolutePaths;
+            for (int i = 0; i < absolutePaths.Length; i++) {
+                string newPath = newName + i + ".png";
+                sprite.ImagePaths[i] = newPath;
+                File.Move(absolutePaths[i], Path.Combine(newImgDir, newPath));
+            }
+
+            sprite.Path = newDirectory;
+
+            Directory.Delete(oldDirectory, true);
+        }
+
         public void Save() {
 
             var obj = new {
@@ -105,11 +165,67 @@ namespace MonogameTexturePacker {
 
             File.WriteAllText(SaveFilePath, JsonConvert.SerializeObject(obj), Encoding.UTF8);
 
-            GetAllSprites().Each(x => {
-                if (x.Unsaved) {
-                    x.Save();
+            List<(Sprite, string)> tempLocations = new List<(Sprite, string)>();
+
+            // Scan if we have too many sprites
+            foreach (UpdatedSpritesData spriteData in updatedSprites.Values) {
+                if (spriteData.CheckSprites == false) {
+                    continue;
                 }
-            });
+
+                string[] paths = Directory.GetFiles(Path.Combine(spriteData.Sprite.Path, "img"));
+                string[] truthTable = spriteData.Sprite.ImagePaths.Select(x => Path.GetFileName(x)).ToArray();
+
+                foreach (string path in paths) {
+                    string strippedPath = Path.GetFileName(path);
+
+                    if (truthTable.Contains(strippedPath) == false) {
+                        File.Delete(path);
+                    }
+                }
+            }
+
+            // Move sprites that need moving
+            foreach (UpdatedSpritesData spriteData in updatedSprites.Values) {
+                Sprite sprite = spriteData.Sprite;
+                string newPath = "";
+
+                if (Path.GetFileNameWithoutExtension(sprite.Path) != sprite.Name) {
+                    newPath = Path.Combine( Path.GetDirectoryName(sprite.Path), sprite.Name);
+                }
+
+                if (newPath == "") {
+                    continue;
+                }
+
+                // If it already exists wait to move until later, just in case something is moving from here
+                if (Directory.Exists(newPath)) {
+                    newPath = newPath + "-temp_for_moving_about";
+                    tempLocations.Add((sprite, newPath));
+                }
+
+                MoveFiles(sprite, sprite.Path, newPath);
+            }
+
+            foreach ((Sprite sprite, string newPath) in tempLocations) {
+                string stripped = newPath.Remove(newPath.LastIndexOf("-temp_for_moving_about"));
+                MoveFiles(sprite, newPath, stripped);
+            }
+
+            foreach (UpdatedSpritesData sprite in updatedSprites.Values) {
+                sprite.Sprite.Save();
+                
+            }
+
+            updatedSprites.Clear();
+        }
+
+        public void AddUnsaved(Sprite sprite, bool checkSprites = false) {
+            if (updatedSprites.ContainsKey(sprite)) {
+                return;
+
+            }
+            updatedSprites.Add(sprite, new UpdatedSpritesData(sprite, "", checkSprites));
         }
 
         public class ImportSpriteEventArgs {
@@ -129,19 +245,23 @@ namespace MonogameTexturePacker {
             OnImportSprite?.Invoke(this, new ImportSpriteEventArgs(parentFolder, file));
         }
 
-    }
 
-    public class WorkspaceFolder {
-        public string name;
-        public string path;
-        public List<WorkspaceFolder> subFolders;
-        public List<Sprite> files;
+        public class AddFolderEventArgs {
+            public WorkspaceFolder Folder { get; }
+            public WorkspaceFolder ParentFolder { get; }
 
-        public WorkspaceFolder(string name, string path, List<WorkspaceFolder> subFolders, List<Sprite> files) {
-            this.name = name;
-            this.path = path;
-            this.subFolders = subFolders;
-            this.files = files;
+            public AddFolderEventArgs(WorkspaceFolder parentFolder, WorkspaceFolder folder) {
+                Folder = folder;
+                ParentFolder = parentFolder;
+            }
         }
+
+
+        public event EventHandler<AddFolderEventArgs> OnAddFolder;
+
+        private void RaiseAddFolder(WorkspaceFolder parentFolder, WorkspaceFolder folder) {
+            OnAddFolder?.Invoke(this, new AddFolderEventArgs(parentFolder, folder));
+        }
+
     }
 }

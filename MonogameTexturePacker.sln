@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonogameTexturePacker", "MonogameTexturePacker\MonogameTexturePacker.csproj", "{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonogameTexturePackerConsole", "MonogameTexturePackerConsole\MonogameTexturePackerConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonogameTexturePackerConsole", "MonogameTexturePackerConsole\MonogameTexturePackerConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{1FEC7127-480C-40B4-9E23-3612FF3956D1}"
 EndProject
@@ -13,6 +13,7 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{11e62415-1add-4ba4-8d6f-2b304d39bd7e}*SharedItemsImports = 4
 		Common\Common.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
+		Common\Common.projitems*{69639f86-a25b-425d-9555-cc7587ca1873}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

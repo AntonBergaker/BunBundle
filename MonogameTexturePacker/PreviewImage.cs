@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -84,6 +85,10 @@ namespace MonogameTexturePacker {
             }
 
             if (imagePath == null) {
+                return;
+            }
+
+            if (File.Exists(imagePath) == false) {
                 return;
             }
 

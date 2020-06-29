@@ -32,18 +32,18 @@
             this.folderView = new System.Windows.Forms.TreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.confirmNewName = new System.Windows.Forms.Button();
+            this.replaceImages = new System.Windows.Forms.Button();
+            this.originSelectionDropdown = new System.Windows.Forms.ComboBox();
             this.nameBox = new System.Windows.Forms.TextBox();
             this.subFramesPreview = new System.Windows.Forms.FlowLayoutPanel();
             this.originY = new System.Windows.Forms.NumericUpDown();
             this.originX = new System.Windows.Forms.NumericUpDown();
+            this.imagePreview = new MonogameTexturePacker.PreviewImage();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.buttonImportSprites = new System.Windows.Forms.Button();
             this.openSpriteDialog = new System.Windows.Forms.OpenFileDialog();
             this.buttonAddFolder = new System.Windows.Forms.Button();
             this.buttonBuild = new System.Windows.Forms.Button();
-            this.originSelectionDropdown = new System.Windows.Forms.ComboBox();
-            this.imagePreview = new MonogameTexturePacker.PreviewImage();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -123,8 +123,8 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.replaceImages);
             this.splitContainer1.Panel2.Controls.Add(this.originSelectionDropdown);
-            this.splitContainer1.Panel2.Controls.Add(this.confirmNewName);
             this.splitContainer1.Panel2.Controls.Add(this.nameBox);
             this.splitContainer1.Panel2.Controls.Add(this.subFramesPreview);
             this.splitContainer1.Panel2.Controls.Add(this.originY);
@@ -134,16 +134,37 @@
             this.splitContainer1.SplitterDistance = 251;
             this.splitContainer1.TabIndex = 3;
             // 
-            // confirmNewName
+            // replaceImages
             // 
-            this.confirmNewName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.confirmNewName.Location = new System.Drawing.Point(419, 403);
-            this.confirmNewName.Name = "confirmNewName";
-            this.confirmNewName.Size = new System.Drawing.Size(75, 23);
-            this.confirmNewName.TabIndex = 9;
-            this.confirmNewName.Text = "Apply";
-            this.confirmNewName.UseVisualStyleBackColor = true;
-            this.confirmNewName.Click += new System.EventHandler(this.confirmNewName_Click);
+            this.replaceImages.Location = new System.Drawing.Point(11, 12);
+            this.replaceImages.Name = "replaceImages";
+            this.replaceImages.Size = new System.Drawing.Size(86, 44);
+            this.replaceImages.TabIndex = 11;
+            this.replaceImages.Text = "Replace Image(s)";
+            this.replaceImages.UseVisualStyleBackColor = true;
+            this.replaceImages.Click += new System.EventHandler(this.replaceImages_Click);
+            // 
+            // originSelectionDropdown
+            // 
+            this.originSelectionDropdown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.originSelectionDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.originSelectionDropdown.FormattingEnabled = true;
+            this.originSelectionDropdown.Items.AddRange(new object[] {
+            "Custom",
+            "Top Left",
+            "Top Center",
+            "Top Right",
+            "Middle Left",
+            "Middle Center",
+            "Middle Right",
+            "Bot Left",
+            "Bot Center",
+            "Bot Right"});
+            this.originSelectionDropdown.Location = new System.Drawing.Point(255, 430);
+            this.originSelectionDropdown.Name = "originSelectionDropdown";
+            this.originSelectionDropdown.Size = new System.Drawing.Size(121, 21);
+            this.originSelectionDropdown.TabIndex = 10;
+            this.originSelectionDropdown.SelectedIndexChanged += new System.EventHandler(this.originSelectionDropdown_SelectedIndexChanged);
             // 
             // nameBox
             // 
@@ -151,17 +172,18 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.nameBox.Location = new System.Drawing.Point(4, 405);
             this.nameBox.Name = "nameBox";
-            this.nameBox.Size = new System.Drawing.Size(402, 20);
+            this.nameBox.Size = new System.Drawing.Size(490, 20);
             this.nameBox.TabIndex = 8;
+            this.nameBox.TextChanged += new System.EventHandler(this.nameBox_TextChanged);
             this.nameBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.nameBox_KeyDown);
             // 
             // subFramesPreview
             // 
             this.subFramesPreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.subFramesPreview.Location = new System.Drawing.Point(3, 3);
+            this.subFramesPreview.Location = new System.Drawing.Point(108, 3);
             this.subFramesPreview.Name = "subFramesPreview";
-            this.subFramesPreview.Size = new System.Drawing.Size(500, 100);
+            this.subFramesPreview.Size = new System.Drawing.Size(395, 100);
             this.subFramesPreview.TabIndex = 7;
             // 
             // originY
@@ -204,6 +226,20 @@
             this.originX.TabIndex = 5;
             this.originX.ValueChanged += new System.EventHandler(this.OriginX_ValueChanged);
             // 
+            // imagePreview
+            // 
+            this.imagePreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.imagePreview.Location = new System.Drawing.Point(0, 107);
+            this.imagePreview.Name = "imagePreview";
+            this.imagePreview.Size = new System.Drawing.Size(503, 296);
+            this.imagePreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.imagePreview.TabIndex = 4;
+            this.imagePreview.TabStop = false;
+            this.imagePreview.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
+            this.imagePreview.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
+            // 
             // buttonImportSprites
             // 
             this.buttonImportSprites.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -231,6 +267,7 @@
             this.buttonAddFolder.TabIndex = 5;
             this.buttonAddFolder.Text = "Add Folder";
             this.buttonAddFolder.UseVisualStyleBackColor = true;
+            this.buttonAddFolder.Click += new System.EventHandler(this.buttonAddFolder_Click);
             // 
             // buttonBuild
             // 
@@ -242,41 +279,6 @@
             this.buttonBuild.Text = "Build";
             this.buttonBuild.UseVisualStyleBackColor = true;
             this.buttonBuild.Click += new System.EventHandler(this.ButtonBuild_Click);
-            // 
-            // originSelectionDropdown
-            // 
-            this.originSelectionDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.originSelectionDropdown.FormattingEnabled = true;
-            this.originSelectionDropdown.Items.AddRange(new object[] {
-            "Custom",
-            "Top Left",
-            "Top Center",
-            "Top Right",
-            "Middle Left",
-            "Middle Center",
-            "Middle Right",
-            "Bot Left",
-            "Bot Center",
-            "Bot Right"});
-            this.originSelectionDropdown.Location = new System.Drawing.Point(255, 430);
-            this.originSelectionDropdown.Name = "originSelectionDropdown";
-            this.originSelectionDropdown.Size = new System.Drawing.Size(121, 21);
-            this.originSelectionDropdown.TabIndex = 10;
-            this.originSelectionDropdown.SelectedIndexChanged += new System.EventHandler(this.originSelectionDropdown_SelectedIndexChanged);
-            // 
-            // imagePreview
-            // 
-            this.imagePreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.imagePreview.Location = new System.Drawing.Point(0, 107);
-            this.imagePreview.Name = "imagePreview";
-            this.imagePreview.Size = new System.Drawing.Size(503, 296);
-            this.imagePreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.imagePreview.TabIndex = 4;
-            this.imagePreview.TabStop = false;
-            this.imagePreview.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
-            this.imagePreview.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
             // 
             // MainForm
             // 
@@ -324,9 +326,9 @@
         private System.Windows.Forms.FlowLayoutPanel subFramesPreview;
         private System.Windows.Forms.Button buttonBuild;
         private System.Windows.Forms.TextBox nameBox;
-        private System.Windows.Forms.Button confirmNewName;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.ComboBox originSelectionDropdown;
+        private System.Windows.Forms.Button replaceImages;
     }
 }
 
