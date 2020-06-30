@@ -199,7 +199,7 @@ namespace MonogameTexturePacker {
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                BuildClassContent(importerClass, childFolder, localPath + "\\\\" + childFolder.name, false);
+                BuildClassContent(importerClass, childFolder, (localPath == "" ? "" : localPath  + "\\\\") + childFolder.name, false);
             }
 
             foreach (Sprite sprite in folder.files) {
@@ -223,7 +223,7 @@ namespace MonogameTexturePacker {
                 importerClass.Indent();
                 importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
                 for (int i = 0; i < spr.ImagePaths.Length; i++) {
-                    importerClass.AddLine($"\"{localPath + "\\\\" + spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
+                    importerClass.AddLine($"\"{(localPath == "" ? "" : localPath + "\\\\") + spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
                 }
                 importerClass.Unindent();
                 importerClass.AddLine(");");
