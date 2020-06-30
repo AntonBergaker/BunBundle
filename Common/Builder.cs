@@ -47,7 +47,6 @@ namespace MonogameTexturePacker {
 
 
         public void Build(WorkspaceFolder workspaceFolder, string rootFolder, string targetFolder, string MgcbPath) {
-            Sprite[] allSprites = workspaceFolder.GetAllSprites().ToArray();
             string fullTargetFolder = Path.Combine(rootFolder, targetFolder);
 
             string cacheFolder = Path.GetFullPath(Path.Combine(rootFolder, "..", "__build_cache"));
@@ -69,29 +68,7 @@ namespace MonogameTexturePacker {
             Dictionary<string, string> imageHashes = LoadImageHashes(cacheFolder);
             Dictionary<string, SpriteExportData> exportSprites = new Dictionary<string, SpriteExportData>();
 
-            // Move all sprites to mip0
-            foreach (Sprite spr in allSprites) {
-                foreach (string fullPath in spr.ImageAbsolutePaths) {
-                    string sourceHash = GetImageHash(fullPath);
-                    bool isCached = imageHashes.ContainsKey(fullPath) && imageHashes[fullPath] == sourceHash;
-
-
-                    string newTargetPath = Path.Combine(cacheFolder, mips[0], Path.GetFileName(fullPath));
-
-                    SpriteExportData data = new SpriteExportData {
-                        SourcePath = fullPath,
-                        FilePath = newTargetPath,
-                        Name = Path.GetFileName(fullPath),
-                        Hash = sourceHash,
-                        IsCached = isCached
-                    };
-
-                    exportSprites.Add(fullPath, data);
-
-                    File.Copy(fullPath, newTargetPath, true);
-                }
-            }
-
+            MoveFiles(workspaceFolder, cacheFolder, "", imageHashes, exportSprites, mips, true);
 
             foreach (SpriteExportData spriteData in exportSprites.Values) {
                 if (spriteData.IsCached) {
@@ -107,7 +84,11 @@ namespace MonogameTexturePacker {
                     height /= 2;
                     width /= 2;
                     Bitmap resizedImage = ResizeImage(image, (int)width, (int)height);
-                    resizedImage.Save(Path.Combine(cacheFolder, mips[i], spriteData.Name));
+                    string path = Path.Combine(cacheFolder, mips[i], spriteData.LocalPath);
+                    if (!Directory.Exists(Path.GetDirectoryName(path))) {
+                        Directory.CreateDirectory(Path.GetDirectoryName(path));
+                    }
+                    resizedImage.Save(path);
                     resizedImage.Dispose();
                 }
 
@@ -118,18 +99,23 @@ namespace MonogameTexturePacker {
             // Run the MGCB
             string contentPath = Path.Combine(fullTargetFolder, "Content", "TempContent.mgcb");
             Console.WriteLine("NEW PATH: " + contentPath);
-            string defaultProperties = string.Join("\r\n",
+            
+            CodeBuilder mgcbText = new CodeBuilder();
+            mgcbText.AddLines(
                 "/outputDir:bin/Content",
                 "/intermediateDir:obj/Content",
                 "/platform:Windows",
                 "/config:",
                 "/profile:Reach",
-                "/compress:False",
-                "/rebuild"
+                "/compress:False"
             );
 
+            foreach (SpriteExportData sprite in exportSprites.Values) {
+                mgcbText.AddLine(GeneratePackingCode(sprite, cacheFolder, mips));
+            }
+
             // Build the file
-            File.WriteAllText(contentPath, defaultProperties + string.Join("", allSprites.Select(x => x.GeneratePackingCode(cacheFolder, mips)).ToArray()));
+            File.WriteAllText(contentPath, mgcbText.ToString());
 
             ProcessStartInfo mgcbInfo = new ProcessStartInfo(MgcbPath, contentPath);
             mgcbInfo.WorkingDirectory = Path.Combine(fullTargetFolder, "Content");
@@ -150,7 +136,7 @@ namespace MonogameTexturePacker {
 
             importerClass.Indent();
 
-            BuildClassContent(importerClass, workspaceFolder, true);
+            BuildClassContent(importerClass, workspaceFolder, "", true);
 
             importerClass.Unindent();
             importerClass.AddLine("}");
@@ -166,7 +152,43 @@ namespace MonogameTexturePacker {
             SaveImageHashes(cacheFolder, hashDict);
         }
 
-        private void BuildClassContent(CodeBuilder importerClass, WorkspaceFolder folder, bool isRoot) {
+        private void MoveFiles(WorkspaceFolder folder, string cachePath, string path, Dictionary<string, string> imageHashes, Dictionary<string, SpriteExportData> exportSprites, string[] mips, bool isRoot) {
+            foreach (WorkspaceFolder childFolder in folder.subFolders) {
+                MoveFiles(childFolder, cachePath, path + childFolder.name, imageHashes, exportSprites, mips, false);
+            }
+
+            string folderPath = Path.Combine(cachePath, mips[0], path);
+            // Create the folder if it doesn't exist
+            if (!Directory.Exists(folderPath)) {
+                Directory.CreateDirectory(folderPath);
+            }
+            
+            // Move all sprites to mip0
+            foreach (Sprite spr in folder.files) {
+                foreach (string fullPath in spr.ImageAbsolutePaths) {
+                    string sourceHash = GetImageHash(fullPath);
+                    bool isCached = imageHashes.ContainsKey(fullPath) && imageHashes[fullPath] == sourceHash;
+
+                    string newTargetPath = Path.Combine(folderPath, Path.GetFileName(fullPath));
+                    string localPath = Path.Combine(path, Path.GetFileName(fullPath));
+
+                    SpriteExportData data = new SpriteExportData {
+                        SourcePath = fullPath,
+                        FilePath = newTargetPath,
+                        LocalPath = localPath,
+                        Name = Path.GetFileName(fullPath),
+                        Hash = sourceHash,
+                        IsCached = isCached
+                    };
+
+                    exportSprites.Add(fullPath, data);
+
+                    File.Copy(fullPath, newTargetPath, true);
+                }
+            }
+        }
+
+        private void BuildClassContent(CodeBuilder importerClass, WorkspaceFolder folder, string localPath, bool isRoot) {
             if (isRoot) {
                 importerClass.AddLine("public static partial class Sprites {");
             }
@@ -177,7 +199,7 @@ namespace MonogameTexturePacker {
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                BuildClassContent(importerClass, childFolder, false);
+                BuildClassContent(importerClass, childFolder, localPath + "\\\\" + childFolder.name, false);
             }
 
             foreach (Sprite sprite in folder.files) {
@@ -201,7 +223,7 @@ namespace MonogameTexturePacker {
                 importerClass.Indent();
                 importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
                 for (int i = 0; i < spr.ImagePaths.Length; i++) {
-                    importerClass.AddLine($"\"{spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
+                    importerClass.AddLine($"\"{localPath + "\\\\" + spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
                 }
                 importerClass.Unindent();
                 importerClass.AddLine(");");
@@ -211,6 +233,38 @@ namespace MonogameTexturePacker {
             importerClass.AddLine("}");
             importerClass.Unindent();
             importerClass.AddLine("}");
+        }
+
+
+        private string GeneratePackingCode(SpriteExportData sprite, string cacheFolder, string[] mips) {
+            StringBuilder sb = new StringBuilder();
+            foreach (string mip in mips) {
+
+                sb.AppendLine();
+                sb.AppendLine();
+                sb.Append(GeneratePackingCodeForImage(
+                    Path.Combine(cacheFolder, mip, sprite.LocalPath),
+                    Path.Combine(mip, sprite.LocalPath)));
+            
+            }
+
+            return sb.ToString();
+        }
+
+        private string GeneratePackingCodeForImage(string absolutePath, string localPath) {
+            return string.Join("\r\n",
+                $"#begin {absolutePath}", //this is just a comment, but it looks neat to have
+                "/importer:TextureImporter",
+                "/processor:TextureProcessor",
+                "/processorParam:ColorKeyColor=255,0,255,255",
+                "/processorParam:ColorKeyEnabled=True",
+                "/processorParam:GenerateMipmaps=False",
+                "/processorParam:PremultiplyAlpha=True",
+                "/processorParam:ResizeToPowerOfTwo=False",
+                "/processorParam:MakeSquare=False",
+                "/processorParam:TextureFormat=Color",
+                $"/build:{absolutePath};{localPath}"
+            );
         }
 
 
@@ -244,6 +298,7 @@ namespace MonogameTexturePacker {
         private class SpriteExportData {
             public string SourcePath;
             public string FilePath;
+            public string LocalPath;
             public string Name;
             public string Hash;
             public bool IsCached;

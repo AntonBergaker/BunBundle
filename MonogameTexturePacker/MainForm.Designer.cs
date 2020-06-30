@@ -38,12 +38,12 @@
             this.subFramesPreview = new System.Windows.Forms.FlowLayoutPanel();
             this.originY = new System.Windows.Forms.NumericUpDown();
             this.originX = new System.Windows.Forms.NumericUpDown();
-            this.imagePreview = new MonogameTexturePacker.PreviewImage();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.buttonImportSprites = new System.Windows.Forms.Button();
             this.openSpriteDialog = new System.Windows.Forms.OpenFileDialog();
             this.buttonAddFolder = new System.Windows.Forms.Button();
             this.buttonBuild = new System.Windows.Forms.Button();
+            this.imagePreview = new MonogameTexturePacker.PreviewImage();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -226,20 +226,6 @@
             this.originX.TabIndex = 5;
             this.originX.ValueChanged += new System.EventHandler(this.OriginX_ValueChanged);
             // 
-            // imagePreview
-            // 
-            this.imagePreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.imagePreview.Location = new System.Drawing.Point(0, 107);
-            this.imagePreview.Name = "imagePreview";
-            this.imagePreview.Size = new System.Drawing.Size(503, 296);
-            this.imagePreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.imagePreview.TabIndex = 4;
-            this.imagePreview.TabStop = false;
-            this.imagePreview.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
-            this.imagePreview.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
-            // 
             // buttonImportSprites
             // 
             this.buttonImportSprites.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -279,6 +265,20 @@
             this.buttonBuild.Text = "Build";
             this.buttonBuild.UseVisualStyleBackColor = true;
             this.buttonBuild.Click += new System.EventHandler(this.ButtonBuild_Click);
+            // 
+            // imagePreview
+            // 
+            this.imagePreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.imagePreview.Location = new System.Drawing.Point(0, 107);
+            this.imagePreview.Name = "imagePreview";
+            this.imagePreview.Size = new System.Drawing.Size(503, 296);
+            this.imagePreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.imagePreview.TabIndex = 4;
+            this.imagePreview.TabStop = false;
+            this.imagePreview.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
+            this.imagePreview.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImagePreview_MouseMove);
             // 
             // MainForm
             // 
