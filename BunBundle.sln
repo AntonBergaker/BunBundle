@@ -3,16 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonogameTexturePacker", "MonogameTexturePacker\MonogameTexturePacker.csproj", "{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundleConsole", "MonogameTexturePackerConsole\BunBundleConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonogameTexturePackerConsole", "MonogameTexturePackerConsole\MonogameTexturePackerConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BunBundle.Model", "Common\BunBundle.Model.shproj", "{1FEC7127-480C-40B4-9E23-3612FF3956D1}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{1FEC7127-480C-40B4-9E23-3612FF3956D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundle", "BunBundle\BunBundle.csproj", "{2CE86BDF-6965-4308-9A1C-794C9100CB77}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Common\Common.projitems*{11e62415-1add-4ba4-8d6f-2b304d39bd7e}*SharedItemsImports = 4
 		Common\Common.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
+		Common\Common.projitems*{2ce86bdf-6965-4308-9a1c-794c9100cb77}*SharedItemsImports = 5
 		Common\Common.projitems*{69639f86-a25b-425d-9555-cc7587ca1873}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,14 +20,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11E62415-1ADD-4BA4-8D6F-2B304D39BD7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{69639F86-A25B-425D-9555-CC7587CA1873}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{69639F86-A25B-425D-9555-CC7587CA1873}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69639F86-A25B-425D-9555-CC7587CA1873}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69639F86-A25B-425D-9555-CC7587CA1873}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CE86BDF-6965-4308-9A1C-794C9100CB77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CE86BDF-6965-4308-9A1C-794C9100CB77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CE86BDF-6965-4308-9A1C-794C9100CB77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CE86BDF-6965-4308-9A1C-794C9100CB77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

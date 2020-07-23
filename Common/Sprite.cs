@@ -6,31 +6,32 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace MonogameTexturePacker {
+namespace BunBundle.Model {
     public class Sprite : IWorkspaceItem {
+        public readonly Workspace Workspace;
+        public WorkspaceFolder Parent;
+
         private string _name;
 
         public string Name {
             get => _name;
             set {
                 if (_name == value) return;
-                workspace.AddUnsaved(this);
+                Workspace.AddSaveAction(new SaveActionRename(this));
                 _name = value;
             }
         }
 
         private string _path;
-        private readonly Workspace workspace;
 
         public string Path {
             get => _path;
             set {
                 if (_path == value) return;
-                workspace.AddUnsaved(this);
+                Workspace.AddSaveAction(new SaveActionSave(this));
                 _path = value;
             }
         }
@@ -41,7 +42,7 @@ namespace MonogameTexturePacker {
             get => _originX;
             set {
                 if (_originX == value) return;
-                workspace.AddUnsaved(this);
+                Workspace.AddSaveAction(new SaveActionSave(this));
                 _originX = value;
             }
         }
@@ -52,53 +53,70 @@ namespace MonogameTexturePacker {
             get => _originY;
             set {
                 if (_originY == value) return;
-                workspace.AddUnsaved(this);
+                Workspace.AddSaveAction(new SaveActionSave(this));
                 _originY = value;
             }
         }
 
+        private int _width = -1;
+        private int _height = -1;
+
+        private void SetDimensions() {
+            if (_width != -1 || _height != -1) {
+                return;
+            }
+            using Stream stream = File.OpenRead(ImageAbsolutePaths[0]);
+            using Image image = Image.FromStream(stream, false, false);
+            _width = image.Width;
+            _height = image.Height;
+        }
+
         public int Width {
             get {
-                Image image = Image.FromFile(ImageAbsolutePaths[0]);
-                int width = image.Width;
-                image.Dispose();
-                return width;
+                SetDimensions();
+                return _width;
             }
         }
 
         public int Height {
             get {
-                Image image = Image.FromFile(ImageAbsolutePaths[0]);
-                int height = image.Height;
-                image.Dispose();
-                return height;
+                SetDimensions();
+                return _height;
             }
         }
 
-        public string[] ImagePaths;
+        public string[] imagePaths;
 
-        public string[] ImageAbsolutePaths => ImagePaths.Select(x => System.IO.Path.Combine(_path, "img", x)).ToArray();
+        public IReadOnlyList<string> ImagePaths => imagePaths;
+
+        public IReadOnlyList<string> ImageAbsolutePaths => imagePaths.Select(x => System.IO.Path.Combine(_path, "img", x)).ToList();
 
         protected string MetaFile => System.IO.Path.Combine(_path, System.IO.Path.GetFileName(_path) + ".spr");
 
-        public Sprite(string name, string path, Workspace workspace) {
+        public Sprite(string name, string path, WorkspaceFolder parent) {
             _name = name;
             _path = path;
-            this.workspace = workspace;
+            this.Parent = parent;
+            Workspace = parent?.Workspace;
             Load();
         }
 
-        public Sprite(string name, string path, string[] imagePaths, Workspace workspace) {
+        public Sprite(string name, string path, Workspace workspace) : this(name, path, (WorkspaceFolder)null) {
+            Workspace = workspace;
+        }
+
+        private Sprite(string name, string path, string[] imagePaths, WorkspaceFolder parent) {
             _name = name;
             _path = path;
-            this.ImagePaths = imagePaths;
-            this.workspace = workspace;
+            this.imagePaths = imagePaths;
+            Workspace = parent.Workspace;
+            this.Parent = parent;
         }
 
         public void Load() {
             JObject obj = JObject.Parse(File.ReadAllText(MetaFile));
             JArray paths = (JArray) obj.GetValue("images");
-            ImagePaths = paths.Select(x => (string) x).ToArray();
+            imagePaths = paths.Select(x => (string) x).ToArray();
             JObject pos = (JObject) obj["origin"];
             _originX = (float) pos["x"];
             _originY = (float) pos["y"];
@@ -114,23 +132,35 @@ namespace MonogameTexturePacker {
             File.WriteAllText(MetaFile, JsonConvert.SerializeObject(obj), Encoding.UTF8);
         }
 
-        public void ClearImages() {
-            ImagePaths = new string[0];
-            workspace.AddUnsaved(this, true);
+        public void SetImagePath(int index, string path) {
+            imagePaths[index] = path;
+            _width = -1;
+            _height = -1;
+        }
+
+        public void ClearImages() { 
+            imagePaths = new string[0];
+            Workspace.AddSaveAction(new SaveActionImageCountChanged(this));
         }
 
         public void AddImages(string[] sourcePaths) {
-            string[] relativePaths = sourcePaths.Select((_, i) => Name + i + ".png").ToArray();
-            string[] imagePaths = sourcePaths.Select((_, i) => io.Path.Combine(Path, "img", relativePaths[i])).ToArray();
+            string[] relativePaths = new string[sourcePaths.Length];
 
-            sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i], true));
-            ImagePaths = ImagePaths.Concat(relativePaths).ToArray();
+            for (int i = 0; i < sourcePaths.Length; i++) {
+                int imageCount = imagePaths.Length + i;
+                relativePaths[i] = Name + imageCount + ".png";
+                string targetPath = io.Path.Combine(Path, "img", relativePaths[i]);
 
-            workspace.AddUnsaved(this, true);
+                File.Copy(sourcePaths[i], targetPath, true);
+            }
+
+            this.imagePaths = ImagePaths.Concat(relativePaths).ToArray();
+
+            Workspace.AddSaveAction(new SaveActionImageCountChanged(this));
         }
 
-        public static Sprite Create(string name, string[] sourcePaths, string targetFolder, Workspace workspace) {
-            string folder = io.Path.Combine(targetFolder, name);
+        public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder, Workspace workspace) {
+            string folder = io.Path.Combine(targetFolder.Path, name);
 
             string imageFolder = io.Path.Combine(folder, "img");
             if (Directory.Exists(folder) == false) {
@@ -146,7 +176,7 @@ namespace MonogameTexturePacker {
 
             sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i], true));
 
-            Sprite spr = new Sprite(name, folder, relativePaths, workspace);
+            Sprite spr = new Sprite(name, folder, relativePaths, targetFolder);
             spr.Save();
 
             return spr;

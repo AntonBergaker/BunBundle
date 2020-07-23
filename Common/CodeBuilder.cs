@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MonogameTexturePacker {
+namespace BunBundle.Model {
     class CodeBuilder {
         private StringBuilder builder;
         private int indent;

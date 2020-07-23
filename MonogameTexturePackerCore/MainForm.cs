@@ -8,8 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MonogameTexturePacker;
 
-namespace MonogameTexturePacker {
+namespace MonogameTexturePackerCore {
     public partial class MainForm : Form {
         private Workspace workspace;
         private Dictionary<WorkspaceFolder, TreeNode> folderToTree;
@@ -27,11 +28,11 @@ namespace MonogameTexturePacker {
             workspace = new Workspace();
             workspace.OnImportSprite += WorkspaceOnOnImportSprite;
             workspace.OnAddFolder += WorkspaceOnOnAddFolder;
-            workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
-
 
             this.KeyPreview = true;
             this.KeyDown += OnKeyDown;
+
+            SpriteControls = new Control[] { imagePreview, sizeLabel, originSelectionDropdown, originX, originY, replaceImages, subFramesPreview };
 
             folderToTree = new Dictionary<WorkspaceFolder, TreeNode>();
             treeToItem = new Dictionary<TreeNode, IWorkspaceItem>();
@@ -43,17 +44,9 @@ namespace MonogameTexturePacker {
                 LoadFolder(path);
             }
 
-            SpriteControls = new Control[] { imagePreview, sizeLabel, originSelectionDropdown, originX, originY, buttonReplaceImages, buttonAddImages, subFramesPreview};
+            UpdateTitle();
 
 
-        }
-
-        private void WorkspaceOnOnUnsavedChanged(object sender, bool unsaved) {
-            if (workspace.Unsaved) {
-                this.Text = "SpritePacker*";
-            } else {
-                this.Text = "SpritePacker";
-            }
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e) {
@@ -64,11 +57,11 @@ namespace MonogameTexturePacker {
             }
         }
 
-        private void WorkspaceOnOnImportSprite(object sender, (WorkspaceFolder parentFolder, Sprite sprite) e) {
-            TreeNode newNode = new TreeNode(e.sprite.Name);
+        private void WorkspaceOnOnImportSprite(object sender, Workspace.ImportSpriteEventArgs e) {
+            TreeNode newNode = new TreeNode(e.Sprite.Name);
 
-            TreeNode parent = folderToTree[e.parentFolder];
-            treeToItem.Add(newNode, e.sprite);
+            TreeNode parent = folderToTree[e.ParentFolder];
+            treeToItem.Add(newNode, e.Sprite);
 
             (parent == rootNode ? folderView.Nodes : parent.Nodes).Add(newNode);
 
@@ -79,24 +72,33 @@ namespace MonogameTexturePacker {
         }
 
 
-        private void WorkspaceOnOnAddFolder(object sender, (WorkspaceFolder parentFolder, WorkspaceFolder folder) e) {
-            TreeNode newNode = GetNodeFromFolder(e.folder);
+        private void WorkspaceOnOnAddFolder(object sender, Workspace.AddFolderEventArgs e) {
+            TreeNode newNode = GetNodeFromFolder(e.Folder);
 
-            TreeNode parent = folderToTree[e.parentFolder];
-            treeToItem.Add(newNode, e.folder);
+            TreeNode parent = folderToTree[e.ParentFolder];
+            treeToItem.Add(newNode, e.Folder);
 
             (parent == rootNode ? folderView.Nodes : parent.Nodes).Add(newNode);
 
             folderView.SelectedNode = newNode;
 
             PopulateItemProperties();
+        }
+
+
+        private void UpdateTitle() {
+            if (workspace.Unsaved) {
+                this.Text = "SpritePacker*";
+            } else {
+                this.Text = "SpritePacker";
+            }
         }
 
 
         public TreeNode GetNodeFromFolder(WorkspaceFolder folder) {
             TreeNode[] subFolders = folder.subFolders.Select(x => GetNodeFromFolder(x)).ToArray();
             TreeNode[] files = folder.files.Select(x => new TreeNode(x.Name)).ToArray();
-            files.Each((x,i) => treeToItem.Add(x, folder.files[i]));
+            files.Each((x, i) => treeToItem.Add(x, folder.files[i]));
 
             TreeNode newNode = new TreeNode(folder.Name, subFolders.Concat(files).ToArray());
             newNode.ImageIndex = 1;
@@ -105,9 +107,9 @@ namespace MonogameTexturePacker {
             treeToItem.Add(newNode, folder);
 
             folderToTree.Add(folder, newNode);
-            
+
             return newNode;
-            
+
         }
 
         private void PopulateTreeView() {
@@ -121,8 +123,7 @@ namespace MonogameTexturePacker {
         private void PopulateItemProperties() {
             if (selectedItem is Sprite sprite) {
                 PopulateSpriteProperties(sprite);
-            }
-            else if (selectedItem is WorkspaceFolder folder) {
+            } else if (selectedItem is WorkspaceFolder folder) {
                 PopulateFolderProperties(folder);
             }
         }
@@ -136,14 +137,12 @@ namespace MonogameTexturePacker {
                 box.Dispose();
             }
 
-            imagePreview.UpdateImage(selectedSprite.ImageAbsolutePaths[0]);;
+            imagePreview.UpdateImage(selectedSprite.ImageAbsolutePaths[0]); ;
 
             originX.Value = (decimal)selectedSprite.OriginX;
             originY.Value = (decimal)selectedSprite.OriginY;
 
             sizeLabel.Text = selectedSprite.Width + " x " + selectedSprite.Height;
-
-            buttonReplaceImages.Text = selectedSprite.ImagePaths.Length == 1 ? "Replace Image" : "Replace Images";
 
             foreach (string path in selectedSprite.ImageAbsolutePaths) {
                 PictureBox box = new PictureBox();
@@ -165,8 +164,8 @@ namespace MonogameTexturePacker {
         }
 
         private void UpdateOriginSelection(Sprite selectedSprite) {
-            int imageWidth = selectedSprite.Width-1;
-            int imageHeight = selectedSprite.Height-1;
+            int imageWidth = selectedSprite.Width - 1;
+            int imageHeight = selectedSprite.Height - 1;
 
             int widthIndex = -1;
 
@@ -190,10 +189,11 @@ namespace MonogameTexturePacker {
 
             if (widthIndex == -1 || heightIndex == -1) {
                 originSelectionDropdown.SelectedIndex = 0;
-            }
-            else {
+            } else {
                 originSelectionDropdown.SelectedIndex = 1 + widthIndex + heightIndex * 3;
             }
+
+            UpdateTitle();
         }
 
         public void LoadFolder(string path) {
@@ -229,6 +229,7 @@ namespace MonogameTexturePacker {
             }
 
             workspace.ImportSprites(openSpriteDialog.FileNames);
+            UpdateTitle();
         }
 
 
@@ -261,26 +262,30 @@ namespace MonogameTexturePacker {
 
         private void OriginX_ValueChanged(object sender, EventArgs e) {
             if (selectedItem is Sprite sprite) {
-                sprite.OriginX = (float) originX.Value;
+                sprite.OriginX = (float)originX.Value;
                 UpdateOriginSelection(sprite);
                 imagePreview.Refresh();
+                UpdateTitle();
             }
         }
 
         private void OriginY_ValueChanged(object sender, EventArgs e) {
             if (selectedItem is Sprite sprite) {
-                sprite.OriginY = (float) originY.Value;
+                sprite.OriginY = (float)originY.Value;
                 UpdateOriginSelection(sprite);
                 imagePreview.Refresh();
+                UpdateTitle();
             }
         }
 
         private void ButtonBuild_Click(object sender, EventArgs e) {
-            workspace.Build();
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            workspace.Build(Path.Combine(path, ".dotnet\\tools\\.store\\dotnet-mgcb-editor\\3.8.0.1375-develop\\dotnet-mgcb-editor\\3.8.0.1375-develop\\tools\\netcoreapp3.1\\any\\mgcb.exe"));
         }
 
         private void Save() {
             workspace.Save();
+            UpdateTitle();
             if (selectedItem is Sprite sprite) {
                 imagePreview.UpdateImage(sprite.ImageAbsolutePaths[0]);
             }
@@ -308,11 +313,13 @@ namespace MonogameTexturePacker {
             int wIndex = index % 3;
             int hIndex = index / 3;
 
-            selectedSprite.OriginX = (selectedSprite.Width -1) * wIndex / 2;
-            selectedSprite.OriginY = (selectedSprite.Height-1) * hIndex / 2;
+            selectedSprite.OriginX = (selectedSprite.Width - 1) * wIndex / 2;
+            selectedSprite.OriginY = (selectedSprite.Height - 1) * hIndex / 2;
 
             originX.Value = (int)selectedSprite.OriginX;
             originY.Value = (int)selectedSprite.OriginY;
+
+            UpdateTitle();
         }
 
         private void nameBox_TextChanged(object sender, EventArgs e) {
@@ -325,6 +332,7 @@ namespace MonogameTexturePacker {
             PopulateItemProperties();
             TreeNode node = treeToItem.FirstOrDefault(x => x.Value == selectedItem).Key;
             node.Text = selectedItem.Name;
+            UpdateTitle();
 
         }
 
@@ -351,6 +359,5 @@ namespace MonogameTexturePacker {
         private void buttonAddFolder_Click(object sender, EventArgs e) {
             workspace.CreateFolder();
         }
-
     }
 }

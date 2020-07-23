@@ -7,8 +7,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MonogameTexturePacker;
 
-namespace MonogameTexturePacker {
+namespace MonogameTexturePackerCore {
     class PreviewImage : PictureBox {
 
         public Sprite selectedSprite;
@@ -94,6 +95,8 @@ namespace MonogameTexturePacker {
 
             Bitmap image = new Bitmap(imagePath);
 
+            Rectangle vR = new Rectangle((int)selectedSprite.OriginX, (int)selectedSprite.OriginY - 25, 1, 50);
+            Rectangle hR = new Rectangle((int)selectedSprite.OriginX - 25, (int)selectedSprite.OriginY, 50, 1);
             Graphics gr = Graphics.FromImage(Image);
             gr.Clear(Color.White);
 
@@ -110,14 +113,7 @@ namespace MonogameTexturePacker {
             }
 
             gr.DrawImage(image, Point.Empty);
-
-            float size = Math.Max(image.Width, image.Height);
-            int originSize = (int)(size / 10f);
-
-            Rectangle vR = new Rectangle((int)selectedSprite.OriginX, (int)selectedSprite.OriginY - originSize, 1, 2*originSize);
-            Rectangle hR = new Rectangle((int)selectedSprite.OriginX - originSize, (int)selectedSprite.OriginY, 2*originSize, 1);
-
-            using (Pen pen = new Pen(Color.DeepPink, Math.Max(1, originSize/10))) {
+            using (Pen pen = new Pen(Color.DeepPink, 1)) {
                 gr.DrawRectangle(pen, vR);
                 gr.DrawRectangle(pen, hR);
             }

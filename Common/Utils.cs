@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MonogameTexturePacker {
+namespace BunBundle.Model {
     static class Utils {
         public static void Each<T>(this IEnumerable<T> ie, Action<T, int> action) {
             int i = 0;

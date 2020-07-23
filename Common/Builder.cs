@@ -12,7 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MonogameTexturePacker {
+namespace BunBundle.Model {
     class Builder {
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace MonogameTexturePacker {
 
 
 
-        public void Build(WorkspaceFolder workspaceFolder, string rootFolder, string targetFolder, string MgcbPath) {
+        public void Build(WorkspaceFolder workspaceFolder, string rootFolder, string targetFolder) {
             string fullTargetFolder = Path.Combine(rootFolder, targetFolder);
 
             string cacheFolder = Path.GetFullPath(Path.Combine(rootFolder, "..", "__build_cache"));
@@ -97,9 +97,15 @@ namespace MonogameTexturePacker {
 
 
             // Run the MGCB
-            string contentPath = Path.Combine(fullTargetFolder, "Content", "TempContent.mgcb");
+            string contentDir = Path.Combine(fullTargetFolder, "Content", "Generated" );
+            string contentPath = Path.Combine(contentDir, "GeneratedContent.mgcb");
             Console.WriteLine("NEW PATH: " + contentPath);
-            
+
+            if (!Directory.Exists(contentDir)) {
+                Directory.CreateDirectory(contentDir);
+            }
+
+
             CodeBuilder mgcbText = new CodeBuilder();
             mgcbText.AddLines(
                 "/outputDir:bin/Content",
@@ -117,8 +123,9 @@ namespace MonogameTexturePacker {
             // Build the file
             File.WriteAllText(contentPath, mgcbText.ToString());
 
-            ProcessStartInfo mgcbInfo = new ProcessStartInfo(MgcbPath, contentPath);
-            mgcbInfo.WorkingDirectory = Path.Combine(fullTargetFolder, "Content");
+            ProcessStartInfo mgcbInfo = new ProcessStartInfo("mgcb", contentPath);
+            mgcbInfo.WorkingDirectory = contentDir;
+
             mgcbInfo.UseShellExecute = false;
             // Run the exporter
             Process processMgcb = Process.Start(mgcbInfo);
@@ -154,7 +161,7 @@ namespace MonogameTexturePacker {
 
         private void MoveFiles(WorkspaceFolder folder, string cachePath, string path, Dictionary<string, string> imageHashes, Dictionary<string, SpriteExportData> exportSprites, string[] mips, bool isRoot) {
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                MoveFiles(childFolder, cachePath, path + childFolder.name, imageHashes, exportSprites, mips, false);
+                MoveFiles(childFolder, cachePath, path + childFolder.Name, imageHashes, exportSprites, mips, false);
             }
 
             string folderPath = Path.Combine(cachePath, mips[0], path);
@@ -193,13 +200,13 @@ namespace MonogameTexturePacker {
                 importerClass.AddLine("public static partial class Sprites {");
             }
             else {
-                importerClass.AddLine($"public static class {Utils.FirstLetterToUpper(folder.name)} {{");
+                importerClass.AddLine($"public static class {Utils.FirstLetterToUpper(folder.Name)} {{");
             }
 
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                BuildClassContent(importerClass, childFolder, (localPath == "" ? "" : localPath  + "\\\\") + childFolder.name, false);
+                BuildClassContent(importerClass, childFolder, (localPath == "" ? "" : localPath  + "\\\\") + childFolder.Name, false);
             }
 
             foreach (Sprite sprite in folder.files) {
@@ -211,7 +218,7 @@ namespace MonogameTexturePacker {
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                importerClass.AddLine($"{Utils.FirstLetterToUpper(childFolder.name)}.ImportSprites(content);");
+                importerClass.AddLine($"{Utils.FirstLetterToUpper(childFolder.Name)}.ImportSprites(content);");
             }
 
             if (folder.subFolders.Count > 0) {
@@ -222,8 +229,8 @@ namespace MonogameTexturePacker {
                 importerClass.AddLine($"{Utils.FirstLetterToUpper(spr.Name)} = MakeSprite(content, ");
                 importerClass.Indent();
                 importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
-                for (int i = 0; i < spr.ImagePaths.Length; i++) {
-                    importerClass.AddLine($"\"{(localPath == "" ? "" : localPath + "\\\\") + spr.Name}{i}\"{(i == spr.ImagePaths.Length - 1 ? "" : ",")}");
+                for (int i = 0; i < spr.ImagePaths.Count; i++) {
+                    importerClass.AddLine($"\"{(localPath == "" ? "" : localPath + "\\\\") + spr.Name}{i}\"{(i == spr.ImagePaths.Count - 1 ? "" : ",")}");
                 }
                 importerClass.Unindent();
                 importerClass.AddLine(");");

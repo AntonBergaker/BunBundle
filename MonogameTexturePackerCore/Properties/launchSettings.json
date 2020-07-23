@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MonogameTexturePackerCore": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Autocute\\Sprites"
+    }
+  }
+}

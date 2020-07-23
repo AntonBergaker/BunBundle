@@ -1,0 +1,206 @@
+﻿<Window x:Name="mainWindow"
+        x:Class="BunBundle.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:wpf="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BunBundle"
+        mc:Ignorable="d"
+        Title="BunBundle" Height="630" Width="716"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}" Icon="/pack.ico"
+>
+<Window.Resources>
+    <local:ObjectToTypeStringConverter x:Key="ObjectToTypeStringConverter"></local:ObjectToTypeStringConverter>
+    <local:FilePathToImageConverter x:Key="FilePathToImageConverter"></local:FilePathToImageConverter>
+    <SolidColorBrush x:Key="AccentColor" Color="#FF6D00" />
+    <SolidColorBrush x:Key="DisabledAccentColor" Color="#66BB4D00" />
+    <SolidColorBrush x:Key="PrimaryColor" Color="#2196F3" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid Grid.ColumnSpan="2" Margin="0, 50, 0, 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <TreeView Margin="0,0,0,0" x:Name="folderView" SelectedItemChanged="folderView_SelectedItemChanged">
+                    <TreeView.ItemContainerStyle>
+
+                        <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        </Style>
+
+                    </TreeView.ItemContainerStyle>
+
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate DataType="local:FolderViewModel" ItemsSource="{Binding Items}">
+                            <Border Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Border.ContextMenu>
+                                    <ContextMenu FontSize="12" FlowDirection="RightToLeft">
+                                        <MenuItem Header="Menu item 1" />
+                                        <MenuItem Header="Menu item 1" />
+                                        <MenuItem Header="Menu item 1" />
+                                        <MenuItem Header="Menu item 1" />
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <StackPanel Orientation="Horizontal" Background="Transparent">
+                                    <materialDesign:PackIcon Margin="0, 0, 5, 0">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=., Converter={StaticResource ObjectToTypeStringConverter}}" Value="FolderViewModel">
+                                                        <Setter Property="materialDesign:PackIcon.Kind" Value="Folder" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Path=., Converter={StaticResource ObjectToTypeStringConverter}}" Value="SpriteViewModel">
+                                                        <Setter Property="materialDesign:PackIcon.Kind" Value="Image" />
+                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{StaticResource PrimaryColor}" />
+                                                    </DataTrigger>
+
+
+                                                    <DataTrigger Binding="{Binding Path=HasSpriteChildren}" Value="True">
+                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{StaticResource AccentColor}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Path=HasSpriteChildren}" Value="False">
+                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{StaticResource DisabledAccentColor}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                    <TextBlock Text="{Binding Name}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=HasSpriteChildren}" Value="True">
+                                                        <Setter Property="TextBlock.Foreground" Value="{StaticResource MaterialDesignBody}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Path=HasSpriteChildren}" Value="False">
+                                                        <Setter Property="TextBlock.Foreground" Value="{StaticResource MaterialDesignBodyLight}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+                <Button ToolTip="New Sprite" Style="{StaticResource MaterialDesignFloatingActionDarkButton}" Margin="0, 0, 25, 10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="buttonNewSprite_Click">
+                    <Grid>
+                        <materialDesign:PackIcon
+                            Kind="ImageAdd"
+                            Height="25"
+                            Width="25" />
+                    </Grid>
+                </Button>
+                <Button ToolTip="New Folder" Style="{StaticResource MaterialDesignFloatingActionAccentButton}" Margin="0, 0, 100, 10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="buttonNewFolder_Click">
+                    <Grid>
+                        <materialDesign:PackIcon
+                            Kind="FolderAdd"
+                            Height="25"
+                            Width="25"
+                            Foreground="White"/>
+                    </Grid>
+                </Button>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+            <Grid Grid.Column="2">
+                <Button x:Name ="buttonBuild" Content="Build" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Click="buttonBuild_Click"/>
+                <TextBox x:Name="textBoxName" 
+                         materialDesign:HintAssist.Hint="Sprite Name"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                         HorizontalAlignment="Stretch" Text="SpriteName" TextWrapping="NoWrap" VerticalAlignment="Top" Margin="10,10,10,0" TextChanged="textBoxName_TextChanged" />
+
+                <TextBox x:Name="textBoxOriginX" 
+                         Visibility="{Binding Path=SpriteVisibility, RelativeSource={RelativeSource AncestorType=Window}}" 
+                         materialDesign:HintAssist.Hint="Origin X"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                         HorizontalAlignment="Left" Text="{Binding Path=OriginX, RelativeSource={RelativeSource AncestorType=Window}}"  Width="40" TextWrapping="NoWrap" VerticalAlignment="Top" 
+                         Margin="10,60,10,0" TextChanged="textBoxOriginX_TextChanged" PreviewTextInput="NumberOnlyPreview" />
+
+                <TextBox x:Name="textBoxOriginY" 
+                         Visibility="{Binding Path=SpriteVisibility, RelativeSource={RelativeSource AncestorType=Window}}" 
+                         materialDesign:HintAssist.Hint="Origin Y"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                         HorizontalAlignment="Left" Text="{Binding Path=OriginY, RelativeSource={RelativeSource AncestorType=Window}}" Width="40"  TextWrapping="NoWrap" VerticalAlignment="Top"
+                         Margin="60,60,10,0" TextChanged="textBoxOriginY_TextChanged" PreviewTextInput="NumberOnlyPreview" />
+
+                <ComboBox x:Name="comboBoxOrigin" 
+                          Visibility="{Binding Path=SpriteVisibility, RelativeSource={RelativeSource AncestorType=Window}}" 
+                          Style="{StaticResource MaterialDesignFloatingHintComboBox}" VerticalAlignment="Top" 
+                          Margin="120,64,10,0" HorizontalAlignment="Left" Width ="130" SelectionChanged="comboBoxOrigin_SelectionChanged">
+                    <ComboBoxItem IsSelected="true">Custom</ComboBoxItem>
+                    <ComboBoxItem>Top Left</ComboBoxItem>
+                    <ComboBoxItem>Top Center</ComboBoxItem>
+                    <ComboBoxItem>Top Right</ComboBoxItem>
+                    <ComboBoxItem>Middle Left</ComboBoxItem>
+                    <ComboBoxItem>Middle Center</ComboBoxItem>
+                    <ComboBoxItem>Middle Right</ComboBoxItem>
+                    <ComboBoxItem>Bot Left</ComboBoxItem>
+                    <ComboBoxItem>Bot Center</ComboBoxItem>
+                    <ComboBoxItem>Bot Right</ComboBoxItem>
+                </ComboBox>
+
+                <Grid Visibility="{Binding Path=SpriteVisibility, RelativeSource={RelativeSource AncestorType=Window}}"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="20,130,30,70" Height="140">
+                    <Separator VerticalAlignment="Top" Margin="0,0,0,0"></Separator>
+                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 30, 0, 0" Width="90" Click="AddSpritesButton_Click">Add</Button>
+                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 80, 0, 0" Width="90" Click="ReplaceSpritesButton_Click">Replace</Button>
+                    <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" Margin="120, 0, 0, 0">
+                        <ItemsControl x:Name="stackPanelSubImages" 
+                                      ItemsSource="{Binding Path=SelectedSprite.ImageAbsolutePaths, RelativeSource={RelativeSource AncestorType=Window}}"
+                        >
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <materialDesign:Card MaxWidth="100" MaxHeight="100" Margin="10, 10, 10, 0">
+                                        <Image Source="{Binding Path=., Converter={StaticResource FilePathToImageConverter}, IsAsync=true, Mode=OneWay}">
+                                            <Image.CacheMode>
+                                                <BitmapCache></BitmapCache>
+                                            </Image.CacheMode>
+                                        </Image>
+                                    </materialDesign:Card>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Separator VerticalAlignment="Bottom" Margin="0,0,0,0"></Separator>
+                </Grid>
+
+                <Grid Visibility="{Binding Path=SpriteVisibility, RelativeSource={RelativeSource AncestorType=Window}}" >
+                    <Image x:Name="imagePreview" 
+                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="30,280,30,70" />
+                    <Label x:Name="labelTextureSize"
+                           Content="Size" HorizontalAlignment="Center" Margin="0,0,0,42" VerticalAlignment="Bottom"/>
+                </Grid>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="0" Margin="0">
+            <Rectangle Fill="#1565C0" Stroke="Black" StrokeThickness="0" VerticalAlignment="Top" Height="50"/>
+            <Expander Panel.ZIndex="100" Header="File" HorizontalAlignment="Left" Margin="0,-3,0,0" VerticalAlignment="Top" Background="{x:Null}" Foreground="White">
+                <StackPanel Panel.ZIndex="101"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="140" RenderTransformOrigin="0.899,0.533" Background="White">
+                    <Button x:Name="menuOpenFolder" HorizontalAlignment="Left" Panel.ZIndex="102" Style="{DynamicResource MaterialDesignFlatButton}" Margin="0" Content="Open Folder..." Foreground="#BB000000"/>
+                    <Button x:Name="menuSave"  HorizontalAlignment="Left" Panel.ZIndex="102" Style="{DynamicResource MaterialDesignFlatButton}" Margin="0" Content="Save" Foreground="#BB000000"/>
+                </StackPanel>
+            </Expander>
+        </Grid>
+    </Grid>
+</Window>

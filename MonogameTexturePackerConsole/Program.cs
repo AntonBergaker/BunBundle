@@ -1,16 +1,14 @@
 ﻿using System;
 using System.IO;
-using MonogameTexturePacker;
+using BunBundle.Model;
 
 namespace MonogameTexturePackerConsole {
     class Program {
         static void Main(string[] args) {
             if (args.Length == 0) {
-                Console.WriteLine("Usage: MonogameTexturePackerConsole sprmFile/folder [path to mgcb]");
+                Console.WriteLine("Usage: MonogameTexturePackerConsole sprmFile/folder");
                 return;
             }
-
-            string mgcbPath = args.Length > 1 ? args[1] : "C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\MGCB.exe";
 
             Workspace workspace = new Workspace();
 
@@ -25,7 +23,7 @@ namespace MonogameTexturePackerConsole {
                 return;
             }
 
-            workspace.Build(mgcbPath);
+            workspace.Build();
         }
     }
 }
