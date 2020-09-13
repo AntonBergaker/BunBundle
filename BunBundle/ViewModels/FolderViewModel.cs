@@ -9,14 +9,17 @@ using BunBundle.Annotations;
 using BunBundle.Model;
 
 namespace BunBundle {
-    public class FolderViewModel : ItemViewModel {
+    public class FolderViewModel : TreeItemViewModel {
         public readonly WorkspaceFolder Folder;
 
-        public ObservableCollection<ItemViewModel> Items { get; }
+        public override ObservableCollection<TreeItemViewModel> Items { get; }
 
         public override IWorkspaceItem Source => Folder;
 
+        public override bool IsUsed => HasSpriteChildren;
+
         private bool isExpanded;
+
         public override bool IsExpanded { 
             get => isExpanded;
             set {
@@ -28,8 +31,8 @@ namespace BunBundle {
             }
         }
 
-        private void CheckHavingSpriteChildren() {
-            foreach (ItemViewModel item in Items) {
+        internal void CheckHavingSpriteChildren() {
+            foreach (TreeItemViewModel item in Items) {
                 if (item is SpriteViewModel) {
                     HasSpriteChildren = true;
                     return;
@@ -47,7 +50,7 @@ namespace BunBundle {
         }
 
         private bool hasSpriteChildren;
-        public bool HasSpriteChildren {
+        public override bool HasSpriteChildren {
             get => hasSpriteChildren;
             set {
                 if (hasSpriteChildren == value) {
@@ -56,6 +59,7 @@ namespace BunBundle {
 
                 hasSpriteChildren = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsUsed));
 
                 if (hasSpriteChildren && Parent != null) {
                     Parent.HasSpriteChildren = true;
@@ -67,13 +71,12 @@ namespace BunBundle {
         }
 
         public FolderViewModel(WorkspaceFolder folder, FolderViewModel parent) {
-            Name = folder.Name;
             Folder = folder;
             Parent = parent;
 
             HasSpriteChildren = folder.files.Count > 0;
 
-            Items = new ObservableCollection<ItemViewModel>();
+            Items = new ObservableCollection<TreeItemViewModel>();
             foreach (WorkspaceFolder subFolder in folder.subFolders) {
                 Items.Add(new FolderViewModel(subFolder, this));
             }
@@ -83,21 +86,37 @@ namespace BunBundle {
             }
         }
 
-        public void AddItem(ItemViewModel item) {
+        public override void Delete() {
+            Parent.Items.Remove(this);
+            Parent.CheckHavingSpriteChildren();
+            Folder.Delete();
+        }
+
+        public override void MoveTo(FolderViewModel target) {
+            Parent.RemoveChild(this);
+            Parent = target;
+
+            Folder.MoveTo(target.Folder);
+
+            Parent.AddItem(this);
+            Parent.CheckHavingSpriteChildren();
+        }
+
+        public void AddItem(TreeItemViewModel treeItem) {
             for (int i = 0; i < Items.Count; i++) {
-                if (CompareItems(item, Items[i]) < 0) {
-                    Items.Insert(i, item);
+                if (CompareItems(treeItem, Items[i]) < 0) {
+                    Items.Insert(i, treeItem);
                     return;
                 }
             }
-            Items.Add(item);
-            if (item is SpriteViewModel) {
+            Items.Add(treeItem);
+            if (treeItem is SpriteViewModel) {
                 HasSpriteChildren = true;
             }
         }
 
 
-        private static int CompareItems(ItemViewModel a, ItemViewModel b) {
+        private static int CompareItems(TreeItemViewModel a, TreeItemViewModel b) {
             if (a.GetType() == b.GetType()) {
                 return a.Name.CompareTo(b.Name);
             }
@@ -111,6 +130,10 @@ namespace BunBundle {
             }
 
             return 0;
+        }
+
+        public void RemoveChild(TreeItemViewModel item) {
+            Items.Remove(item);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
@@ -9,13 +10,12 @@ using BunBundle.Annotations;
 using BunBundle.Model;
 
 namespace BunBundle {
-    public abstract class ItemViewModel : INotifyPropertyChanged {
+    public abstract class TreeItemViewModel : INotifyPropertyChanged {
         
-        private string name;
         public string Name {
-            get => name;
+            get => Source.Name;
             set {
-                name = value;
+                Source.Name = value;
                 OnPropertyChanged();
             }
         }
@@ -32,12 +32,21 @@ namespace BunBundle {
             }
         }
 
+        public abstract bool IsUsed { get; }
+
+        public abstract bool HasSpriteChildren { get; set; }
+
+        public abstract ObservableCollection<TreeItemViewModel> Items { get; }
 
         public abstract bool IsExpanded { get; set; }
 
 
 
         public abstract IWorkspaceItem Source { get; }
+
+        public abstract void Delete();
+
+        public abstract void MoveTo(FolderViewModel target);
 
         public FolderViewModel Parent;
 

@@ -83,7 +83,7 @@ namespace BunBundle.Model {
                 for (int i = 1; i < mips.Length; i++) {
                     height /= 2;
                     width /= 2;
-                    Bitmap resizedImage = ResizeImage(image, (int)width, (int)height);
+                    Bitmap resizedImage = ResizeImage(image, Math.Max(1 ,(int)width), Math.Max(1, (int)height));
                     string path = Path.Combine(cacheFolder, mips[i], spriteData.LocalPath);
                     if (!Directory.Exists(Path.GetDirectoryName(path))) {
                         Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -161,7 +161,7 @@ namespace BunBundle.Model {
 
         private void MoveFiles(WorkspaceFolder folder, string cachePath, string path, Dictionary<string, string> imageHashes, Dictionary<string, SpriteExportData> exportSprites, string[] mips, bool isRoot) {
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                MoveFiles(childFolder, cachePath, path + childFolder.Name, imageHashes, exportSprites, mips, false);
+                MoveFiles(childFolder, cachePath, Path.Combine(path, childFolder.Name), imageHashes, exportSprites, mips, false);
             }
 
             string folderPath = Path.Combine(cachePath, mips[0], path);
@@ -196,29 +196,55 @@ namespace BunBundle.Model {
         }
 
         private void BuildClassContent(CodeBuilder importerClass, WorkspaceFolder folder, string localPath, bool isRoot) {
+            string Nameify(string folderName) {
+                return Utils.FirstLetterToUpper(folderName);
+            }
+
+            string Groupify(string folderName) {
+                return Utils.FirstLetterToUpper(folderName) + "Group";
+            }
+
+            
             if (isRoot) {
                 importerClass.AddLine("public static partial class Sprites {");
             }
             else {
-                importerClass.AddLine($"public static class {Utils.FirstLetterToUpper(folder.Name)} {{");
+                importerClass.AddLine($"public class {Groupify(folder.Name)} {{");
             }
 
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
+                if (isRoot) {
+                    importerClass.AddLine($"public static {Groupify(childFolder.Name)} {Nameify(childFolder.Name)} {{private set; get;}}");
+                }
+                else {
+                    importerClass.AddLine($"public {Groupify(childFolder.Name)} {Nameify(childFolder.Name)} {{get;}}");
+                }
                 BuildClassContent(importerClass, childFolder, (localPath == "" ? "" : localPath  + "\\\\") + childFolder.Name, false);
             }
 
             foreach (Sprite sprite in folder.files) {
-               importerClass.AddLine($"public static Sprite {Utils.FirstLetterToUpper(sprite.Name)} {{private set; get;}}");
+                if (isRoot) {
+                    importerClass.AddLine($"public static Sprite {Nameify(sprite.Name)} {{private set; get;}}");
+                }
+                else {
+                    importerClass.AddLine($"public Sprite {Nameify(sprite.Name)} {{get;}}");
+                }
             }
 
             importerClass.AddLine("");
-            importerClass.AddLine("internal static void ImportSprites(ContentManager content) {");
+            if (isRoot) {
+                importerClass.AddLine("internal static void ImportSprites(ContentManager content) {");
+            }
+            else {
+                importerClass.AddLine($"internal {Groupify(folder.Name)}(ContentManager content) {{");
+            }
+
             importerClass.Indent();
 
             foreach (WorkspaceFolder childFolder in folder.subFolders) {
-                importerClass.AddLine($"{Utils.FirstLetterToUpper(childFolder.Name)}.ImportSprites(content);");
+                importerClass.AddLine($"{Nameify(childFolder.Name)} = new {Groupify(childFolder.Name)}(content);");
             }
 
             if (folder.subFolders.Count > 0) {
@@ -226,7 +252,7 @@ namespace BunBundle.Model {
             }
 
             foreach (Sprite spr in folder.files) {
-                importerClass.AddLine($"{Utils.FirstLetterToUpper(spr.Name)} = MakeSprite(content, ");
+                importerClass.AddLine($"{Nameify(spr.Name)} = Sprites.MakeSprite(content, ");
                 importerClass.Indent();
                 importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
                 for (int i = 0; i < spr.ImagePaths.Count; i++) {

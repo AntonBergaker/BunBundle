@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using BunBundle.Model.Saving;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -23,7 +22,15 @@ namespace BunBundle.Model {
 
 
 
-        public Workspace() {
+        public Workspace(string path) {
+            if (File.Exists(path)) {
+                OpenFolder(Path.GetDirectoryName(path));
+            } else if (Directory.Exists(path)) {
+                OpenFolder(path);
+            }
+            else {
+                throw new FileNotFoundException("Directory/File not found");
+            }
             savingManager = new SavingManager();
         }
 
@@ -32,38 +39,14 @@ namespace BunBundle.Model {
             return RootFolder.GetAllSprites().ToArray();
         }
 
-        private WorkspaceFolder GetWorkspaceFolder(string path) {
-            List<WorkspaceFolder> subFolders = new List<WorkspaceFolder>();
-            List<Sprite> files = new List<Sprite>();
-            foreach (string dir in Directory.GetDirectories(path)) {
-                if (Directory.GetFiles(dir, "*.spr").Length > 0) {
-                    files.Add(new Sprite(Path.GetFileName(dir), dir, this));
-                    continue;
-                }
 
-                WorkspaceFolder sub = GetWorkspaceFolder(dir);
-                subFolders.Add(sub);
-            }
-
-            return new WorkspaceFolder(Path.GetFileName(path), path, this, subFolders, files);
-
-        }
-
-        public void OpenFolder(string folder) {
+        private void OpenFolder(string folder) {
             string[] files = Directory.GetFiles(folder, "sprites.sprm");
             if (files.Length >= 1) {
                 OpenProjectFile(files[0]);
             }
 
-            RootFolder = GetWorkspaceFolder(folder);
-
-            if (RootFolder == null) {
-                RootFolder = new WorkspaceFolder(Path.GetFileName(folder), folder, this, new List<WorkspaceFolder>(), new List<Sprite>());
-            }
-        }
-
-        public void OpenFile(string file) {
-            OpenFolder(Path.GetDirectoryName(file));
+            RootFolder = WorkspaceFolder.Import(folder, this);
         }
 
         private void OpenProjectFile(string file) {
@@ -98,7 +81,7 @@ namespace BunBundle.Model {
                 break;
             }
 
-            WorkspaceFolder folder = new WorkspaceFolder(newName, Path.Combine(target.Path, newName), this, new List<WorkspaceFolder>(), new List<Sprite>());
+            WorkspaceFolder folder = new WorkspaceFolder(newName, Path.Combine(target.Path, newName), target);
             if (!Directory.Exists(folder.Path)) {
                 Directory.CreateDirectory(folder.Path);
             }
@@ -124,13 +107,13 @@ namespace BunBundle.Model {
 
             File.WriteAllText(SaveFilePath, JsonConvert.SerializeObject(obj), Encoding.UTF8);
 
-            savingManager.Save();
+            savingManager.RunActions();
             
             RaiseUnsavedChanged();
         }
 
         public void AddSaveAction(SaveAction saveAction) {
-            savingManager.AddSaveAction(saveAction);
+            savingManager.Add(saveAction);
 
             RaiseUnsavedChanged();
         }

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace BunBundle.Model {
-    class SaveActionImageCountChanged : SaveAction {
+    class SaveActionImagesChanged : SaveAction {
         public Sprite Sprite { get; }
 
         public override IWorkspaceItem Item => Sprite;
 
-        public SaveActionImageCountChanged(Sprite sprite) {
+        public SaveActionImagesChanged(Sprite sprite) {
             Sprite = sprite;
         }
     }

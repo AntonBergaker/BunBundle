@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,31 +9,48 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using BunBundle.Annotations;
 using Microsoft.Win32;
 using BunBundle.Model;
+using MaterialDesignThemes.Wpf;
+using Ookii.Dialogs.Wpf;
 
 namespace BunBundle {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged {
-        private Workspace workspace;
-        private Dictionary<IWorkspaceItem, ItemViewModel> itemToViewModels;
+        private Workspace _workspace;
+
+        private Workspace workspace {
+            get => _workspace;
+            set {
+                _workspace = value;
+                _workspace.OnImportSprite += WorkspaceOnOnImportSprite;
+                _workspace.OnAddFolder += WorkspaceOnOnAddFolder;
+                _workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
+
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AnyVisibility));
+                PopulateTreeView();
+            }
+        }
+
+        private readonly Dictionary<IWorkspaceItem, TreeItemViewModel> itemToViewModels;
 
         private readonly PreviewImage previewImageHandler;
-        
-        private IWorkspaceItem selectedItem;
 
-        public Visibility SpriteVisibility => selectedItem is Sprite ? Visibility.Visible : Visibility.Hidden;
+        private TreeItemViewModel selectedItem;
 
-        public Sprite SelectedSprite => selectedItem as Sprite;
+        public Visibility SpriteVisibility => selectedItem is SpriteViewModel ? Visibility.Visible : Visibility.Hidden;
+        public Visibility AnyVisibility => workspace != null ? Visibility.Visible : Visibility.Hidden;
 
-        private bool preventRedraw;
+        public SpriteViewModel SelectedSprite => selectedItem as SpriteViewModel;
 
-        public IWorkspaceItem SelectedItem {
+        public TreeItemViewModel SelectedItem {
             get => selectedItem;
             set {
                 selectedItem = value;
@@ -54,23 +72,17 @@ namespace BunBundle {
             }
         }
 
-        private float originY;
-        public float OriginY {
-            get => originY;
+        private bool isDarkMode;
+        public bool IsDarkMode {
+            get => isDarkMode;
             set {
-                originY = value;
+                isDarkMode = value;
                 OnPropertyChanged();
             }
         }
 
-        private float originX;
-        public float OriginX {
-            get => originX;
-            set {
-                originX = value;
-                OnPropertyChanged();
-            }
-        }
+
+        private bool preventRedraw;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -82,11 +94,6 @@ namespace BunBundle {
         public MainWindow(string[] arguments) {
             InitializeComponent();
 
-            workspace = new Workspace();
-            workspace.OnImportSprite += WorkspaceOnOnImportSprite;
-            workspace.OnAddFolder += WorkspaceOnOnAddFolder;
-            workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
-
             previewImageHandler = new PreviewImage(imagePreview);
 
             previewImageHandler.OnOriginSet += OnOriginSet;
@@ -94,7 +101,7 @@ namespace BunBundle {
             //this.KeyPreview = true;
             this.KeyDown += OnKeyDown;
 
-            itemToViewModels = new Dictionary<IWorkspaceItem, ItemViewModel>();
+            itemToViewModels = new Dictionary<IWorkspaceItem, TreeItemViewModel>();
             //subImages = new List<PictureBox>();
 
             if (arguments.Length == 1) {
@@ -104,6 +111,10 @@ namespace BunBundle {
             }
 
             preventRedraw = false;
+
+
+            IsDarkMode = Settings.Default.IsDark;
+            ModifyTheme();
         }
 
         private void WorkspaceOnOnUnsavedChanged(object sender, bool unsaved) {
@@ -112,6 +123,15 @@ namespace BunBundle {
             } else {
                 this.Title = "BunBundle";
             }
+        }
+
+        private void ModifyTheme() {
+            var paletteHelper = new PaletteHelper();
+            ITheme theme = paletteHelper.GetTheme();
+
+            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+
+            paletteHelper.SetTheme(theme);
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e) {
@@ -138,6 +158,7 @@ namespace BunBundle {
         private void WorkspaceOnOnAddFolder(object sender, (WorkspaceFolder parentFolder, WorkspaceFolder folder) e) {
             FolderViewModel parent = itemToViewModels[e.parentFolder] as FolderViewModel;
 
+
             FolderViewModel newNode = new FolderViewModel(e.folder, parent);
 
             itemToViewModels.Add(e.folder, newNode);
@@ -153,8 +174,7 @@ namespace BunBundle {
         }
 
         private void LoadFolder(string path) {
-            workspace.OpenFolder(path);
-            PopulateTreeView();
+            workspace = new Workspace(path);
         }
 
         private void PopulateTreeView() {
@@ -163,31 +183,29 @@ namespace BunBundle {
             AddToDictionary(rootViewModel);
         }
 
-        private void AddToDictionary(ItemViewModel viewModel) {
+        private void AddToDictionary(TreeItemViewModel viewModel) {
             itemToViewModels.Add(viewModel.Source, viewModel);
             if (viewModel is FolderViewModel folder) {
-                foreach (ItemViewModel item in folder.Items) {
+                foreach (TreeItemViewModel item in folder.Items) {
                     AddToDictionary(item);
                 }
             }
         }
 
         private void PopulateItemProperties() {
-            if (SelectedItem is Sprite sprite) {
+            if (SelectedItem is SpriteViewModel sprite) {
                 PopulateSpriteProperties(sprite);
-            } else if (SelectedItem is WorkspaceFolder folder) {
-                PopulateFolderProperties(folder);
+            } else if (SelectedItem is FolderViewModel folder) {
+                PopulateFolderProperties(folder.Folder);
             }
         }
 
-        private void PopulateSpriteProperties(Sprite selectedSprite) {
+        private void PopulateSpriteProperties(SpriteViewModel selectedSprite) {
             preventRedraw = true;
 
-            OriginX = selectedSprite.OriginX;
-            OriginY = selectedSprite.OriginY;
             UpdateOriginSelection(selectedSprite);
 
-            labelTextureSize.Content = selectedSprite.Width + " x " + selectedSprite.Height;
+            labelTextureSize.Content = selectedSprite.Sprite.Width + " x " + selectedSprite.Sprite.Height;
 
 
             textBoxName.SetCurrentValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, "Sprite Name");
@@ -195,8 +213,8 @@ namespace BunBundle {
 
             preventRedraw = false;
 
-            if (SelectedItem is Sprite sprite) {
-                previewImageHandler.SetImage(sprite, 0);
+            if (SelectedItem is SpriteViewModel sprite) {
+                previewImageHandler.SetImage(sprite.Sprite, 0);
             }
         }
 
@@ -205,7 +223,7 @@ namespace BunBundle {
             textBoxName.Text = SelectedItem.Name;
         }
 
-        private void UpdateOriginSelection(Sprite selectedSprite) {
+        private void UpdateOriginSelection(SpriteViewModel selectedSprite) {
             int imageWidth = selectedSprite.Width;
             int imageHeight = selectedSprite.Height;
 
@@ -244,7 +262,8 @@ namespace BunBundle {
         }
 
         private void folderView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-            SelectedItem = (e.NewValue as ItemViewModel)?.Source;
+            preventRedraw = true;
+            SelectedItem = e.NewValue as TreeItemViewModel;
 
             PopulateItemProperties();
         }
@@ -255,13 +274,10 @@ namespace BunBundle {
             }
 
             SelectedItem.Name = textBoxName.Text;
-            if (itemToViewModels.TryGetValue(SelectedItem, out ItemViewModel vm)) {
-                vm.Name = SelectedItem.Name;
-            }
         }
 
         private void textBoxOriginX_TextChanged(object sender, TextChangedEventArgs e) {
-            if (SelectedItem is Sprite sprite) {
+            if (SelectedItem is SpriteViewModel sprite) {
                 if (float.TryParse(textBoxOriginX.Text, out float result)) {
                     sprite.OriginX = result;
                 }
@@ -274,7 +290,7 @@ namespace BunBundle {
         }
 
         private void textBoxOriginY_TextChanged(object sender, TextChangedEventArgs e) {
-            if (SelectedItem is Sprite sprite) {
+            if (SelectedItem is SpriteViewModel sprite) {
                 if (float.TryParse(textBoxOriginY.Text, out float result)) {
                     sprite.OriginY = result;
                 }
@@ -287,13 +303,9 @@ namespace BunBundle {
         }
 
         private void OnOriginSet(object sender, Point e) {
-            if (SelectedItem is Sprite selectedSprite) {
+            if (SelectedItem is SpriteViewModel selectedSprite) {
                 selectedSprite.OriginX = (float)e.X;
                 selectedSprite.OriginY = (float)e.Y;
-
-                OriginX = selectedSprite.OriginX;
-                OriginY = selectedSprite.OriginY;
-                UpdateOriginSelection(selectedSprite);
 
                 UpdateOriginSelection(selectedSprite);
 
@@ -307,7 +319,7 @@ namespace BunBundle {
         }
 
         private void comboBoxOrigin_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            Sprite selectedSprite = SelectedItem as Sprite;
+            SpriteViewModel selectedSprite = (SelectedItem as SpriteViewModel);
 
             if (selectedSprite == null) {
                 return;
@@ -323,20 +335,22 @@ namespace BunBundle {
             selectedSprite.OriginX = (selectedSprite.Width) * wIndex / 2;
             selectedSprite.OriginY = (selectedSprite.Height) * hIndex / 2;
 
-            OriginX = selectedSprite.OriginX;
-            OriginY = selectedSprite.OriginY;
+        }
+
+        private FolderViewModel GetSelectedFolder() {
+            switch (SelectedItem) {
+                case FolderViewModel folder:
+                    return folder;
+                case SpriteViewModel sprite:
+                    return sprite.Parent;
+                default:
+                    return rootViewModel;
+            }
         }
 
         private void buttonNewFolder_Click(object sender, RoutedEventArgs e) {
-            if (SelectedItem is WorkspaceFolder folder) {
-                workspace.CreateFolder(folder);
-            } else if (SelectedItem is Sprite sprite) {
-                workspace.CreateFolder(sprite.Parent);
-            }
-            else {
-                workspace.CreateFolder(rootViewModel.Folder);
-            }
 
+            workspace.CreateFolder(GetSelectedFolder().Folder);
         }
 
         private OpenFileDialog MakeOpenSpritesDialog() {
@@ -351,17 +365,12 @@ namespace BunBundle {
             OpenFileDialog dialog = MakeOpenSpritesDialog();
 
             if (dialog.ShowDialog() == true) {
-                if (SelectedItem is WorkspaceFolder folder) {
-                    workspace.ImportSprites(dialog.FileNames, folder);
-                }
-                else if (SelectedItem is Sprite sprite) {
-                    workspace.ImportSprites(dialog.FileNames, sprite.Parent);
-                }
+                workspace.ImportSprites(dialog.FileNames, GetSelectedFolder().Folder);
             }
         }
 
         private void AddSpritesButton_Click(object sender, RoutedEventArgs e) {
-            Sprite sprite = selectedItem as Sprite;
+            SpriteViewModel sprite = selectedItem as SpriteViewModel;
 
             if (sprite == null) {
                 return;
@@ -375,7 +384,7 @@ namespace BunBundle {
         }
 
         private void ReplaceSpritesButton_Click(object sender, RoutedEventArgs e) {
-            Sprite sprite = selectedItem as Sprite;
+            SpriteViewModel sprite = selectedItem as SpriteViewModel;
 
             if (sprite == null) {
                 return;
@@ -384,9 +393,199 @@ namespace BunBundle {
             OpenFileDialog dialog = MakeOpenSpritesDialog();
 
             if (dialog.ShowDialog() == true) {
-                sprite.ClearImages();
-                sprite.AddImages(dialog.FileNames);
+                sprite.ReplaceImages(dialog.FileNames);
             }
         }
+
+        private void MenuSave_OnClick(object sender, RoutedEventArgs e) {
+            Save();
+        }
+
+        private void MenuOpenFolder_OnClick(object sender, RoutedEventArgs e) {
+
+            VistaFolderBrowserDialog dialog = new VistaFolderBrowserDialog();
+            
+
+            if (dialog.ShowDialog() == true) {
+                workspace = new Workspace(dialog.SelectedPath);
+            }
+        }
+
+        private void MenuToggleDarkMode_OnClick(object sender, RoutedEventArgs e) {
+            IsDarkMode = !IsDarkMode;
+            ModifyTheme();
+            Settings.Default.IsDark = isDarkMode;
+            Settings.Default.Save();
+        }
+
+        private void MenuOpenInExplorer_OnClick(object sender, RoutedEventArgs e) {
+            TreeItemViewModel model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
+
+            if (model == null) {
+                return;
+            }
+            OpenFolder(model.Source.Path);
+        }
+
+        private void MenuDelete_OnClick(object sender, RoutedEventArgs e) {
+            TreeItemViewModel model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
+
+            model?.Delete();
+        }
+
+
+        private void OpenFolder(string folderPath) {
+            if (Directory.Exists(folderPath)) {
+                ProcessStartInfo startInfo = new ProcessStartInfo {
+                    Arguments = folderPath,
+                    FileName = "explorer.exe"
+                };
+
+                Process.Start(startInfo);
+            }
+            else {
+                MessageBox.Show($"{folderPath} Directory does not exist!");
+            }
+        }
+
+        #region Drag and drop for treeview
+
+        private Point tvLastMouseDown;
+        private TreeItemViewModel tvDraggedItem;
+        private TreeItemViewModel tvTargetItem;
+
+        private TreeItemViewModel GetNearestContainer(UIElement element) {
+
+            // Walk up the element tree to the nearest tree view item.
+            TreeViewItem container = element as TreeViewItem;
+            while ((container == null) && (element != null)) {
+                element = VisualTreeHelper.GetParent(element) as UIElement;
+                container = element as TreeViewItem;
+            }
+
+            return container?.Header as TreeItemViewModel;
+            
+        }
+
+        private bool CheckDropTarget(TreeItemViewModel source, TreeItemViewModel target) {
+            FolderViewModel targetFolder;
+            switch (target) {
+                case FolderViewModel tFolder:
+                    targetFolder = tFolder;
+                    break;
+                case SpriteViewModel targetSprite:
+                    targetFolder = targetSprite.Parent;
+                    break;
+                default:
+                    return false;
+            }
+
+
+            // Make sure my new folder isn't the same as my current one
+            if (source.Parent == targetFolder) {
+                return false;
+            }
+
+            // If i'm a folder, make sure I'm not dragging to a child of me
+            if (source is FolderViewModel sourceFolder) {
+                FolderViewModel parent = targetFolder;
+                while (parent != null) {
+                    if (parent == sourceFolder) {
+                        return false;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+
+            return true;
+        }
+
+        private void MoveFile(TreeItemViewModel source, TreeItemViewModel target) {
+            if (CheckDropTarget(source, target) == false) {
+                return;
+            }
+
+            FolderViewModel targetFolder;
+            switch (target) {
+                case FolderViewModel tFolder:
+                    targetFolder = tFolder;
+                    break;
+                case SpriteViewModel targetSprite:
+                    targetFolder = targetSprite.Parent;
+                    break;
+                default:
+                    return;
+            }
+
+            source.MoveTo(targetFolder);
+        }
+
+        private void treeView_DragOver(object sender, DragEventArgs e) {
+
+            Point currentPosition = e.GetPosition(folderView);
+
+            if ((Math.Abs(currentPosition.X - tvLastMouseDown.X) > 10.0) ||
+                (Math.Abs(currentPosition.Y - tvLastMouseDown.Y) > 10.0)) {
+                // Verify that this is a valid drop and then store the drop target
+                TreeItemViewModel item = GetNearestContainer(e.OriginalSource as UIElement);
+                if (CheckDropTarget(tvDraggedItem, item)) {
+                    e.Effects = DragDropEffects.Move;
+                } else {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            e.Handled = true;
+            
+        }
+
+        private void treeView_Drop(object sender, DragEventArgs e) {
+            
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+
+            // Verify that this is a valid drop and then store the drop target
+            TreeItemViewModel TargetItem = GetNearestContainer(e.OriginalSource as UIElement);
+            if (TargetItem != null && tvDraggedItem != null) {
+                tvTargetItem = TargetItem;
+                e.Effects = DragDropEffects.Move;
+            }
+        
+        }
+
+        private void treeView_MouseMove(object sender, MouseEventArgs e) {
+        
+            if (e.LeftButton == MouseButtonState.Pressed) {
+                Point currentPosition = e.GetPosition(folderView);
+
+                if ((Math.Abs(currentPosition.X - tvLastMouseDown.X) > 10.0) ||
+                    (Math.Abs(currentPosition.Y - tvLastMouseDown.Y) > 10.0)) {
+                    tvDraggedItem = folderView.SelectedItem as TreeItemViewModel;
+                    if (tvDraggedItem != null) {
+                        DragDropEffects finalDropEffect =
+                            DragDrop.DoDragDrop(folderView,
+                                folderView.SelectedValue,
+                                DragDropEffects.Move);
+                        //Checking target is not null and item is
+                        //dragging(moving)
+                        if ((finalDropEffect == DragDropEffects.Move) &&
+                            (tvTargetItem != null)) {
+                            // A Move drop was accepted
+                            MoveFile(tvDraggedItem, tvTargetItem);
+                            tvTargetItem = null;
+                            tvDraggedItem = null;
+                        }
+                    }
+                }
+            }
+        
+        }
+
+        private void treeView_MouseDown(object sender, MouseButtonEventArgs e) {
+            if (e.ChangedButton == MouseButton.Left) {
+                tvLastMouseDown = e.GetPosition(folderView);
+            }
+        }
+
+        #endregion
     }
 }

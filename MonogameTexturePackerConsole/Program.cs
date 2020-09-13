@@ -6,22 +6,13 @@ namespace MonogameTexturePackerConsole {
     class Program {
         static void Main(string[] args) {
             if (args.Length == 0) {
-                Console.WriteLine("Usage: MonogameTexturePackerConsole sprmFile/folder");
+                Console.WriteLine("Usage: BunBundle sprmFile/folder");
                 return;
             }
-
-            Workspace workspace = new Workspace();
 
             string path = args[0];
 
-            if (File.Exists(path)) {
-                workspace.OpenFile(path);
-            } else if (Directory.Exists(path)) {
-                workspace.OpenFolder(path);
-            } else {
-                Console.WriteLine("Can not find the file/folder");
-                return;
-            }
+            Workspace workspace = new Workspace(path);
 
             workspace.Build();
         }

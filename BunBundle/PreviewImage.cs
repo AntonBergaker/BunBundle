@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Cache;
 using System.Text;
@@ -11,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using BunBundle.Model;
+using MaterialDesignThemes.Wpf;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using Image = System.Windows.Controls.Image;
@@ -23,12 +25,20 @@ namespace BunBundle {
         private BitmapImage source;
         private int index;
 
-        private string oldPath = "";
-        private double oldOriginX;
-        private double oldOriginY;
+        private Sprite oldImportSprite;
+        private string oldImportPath = "";
 
-        private Task setImageTask;
-        private CancellationTokenSource taskCancelToken;
+        private double oldRedrawOriginX;
+        private double oldRedrawOriginY;
+        private Sprite oldRedrawSprite;
+        private string oldRedrawPath = "";
+
+        private Task imageImportImageTask;
+        private CancellationTokenSource imageImportCancelToken;
+
+        private Task redrawTask;
+        private CancellationTokenSource redrawCancelToken;
+
 
         public PreviewImage(Image image) {
             this.image = image;
@@ -91,6 +101,32 @@ namespace BunBundle {
         }
 
         public void Redraw() {
+            if (oldRedrawOriginX == sprite.OriginX && oldRedrawOriginY == sprite.OriginY
+                                                   && oldRedrawSprite == sprite &&
+                                                   oldRedrawPath == sprite.ImageAbsolutePaths[index]) {
+                return;
+            }
+
+            oldRedrawOriginX = sprite.OriginX;
+            oldRedrawOriginY = sprite.OriginY;
+            oldRedrawSprite = sprite;
+            oldRedrawPath = sprite.ImageAbsolutePaths[index];
+
+            if (redrawTask != null && redrawTask.IsCompleted == false) {
+                redrawCancelToken.Cancel();
+                redrawTask = null;
+            }
+
+            redrawCancelToken = new CancellationTokenSource();
+
+            redrawTask = new Task(() => { RedrawImage(redrawCancelToken); }, redrawCancelToken.Token);
+
+
+            redrawTask.Start();
+            
+        }
+
+        private void RedrawImage(CancellationTokenSource cancelToken) {
             if (sprite == null) {
                 return;
             }
@@ -120,6 +156,10 @@ namespace BunBundle {
                         imageDrawings.Children.Add(square);
                     }
                 }
+
+                if (cancelToken != null && cancelToken.Token.IsCancellationRequested) {
+                    return;
+                }
             }
 
             if ( source != null) {
@@ -137,9 +177,6 @@ namespace BunBundle {
 
             float size = Math.Max(sprite.Width, sprite.Height);
             int crossSize = Math.Max(1, (int)(size / 10f));
-
-            oldOriginX = sprite.OriginX;
-            oldOriginY = sprite.OriginY;
 
             int oX = (int)sprite.OriginX;
             int oY = (int)sprite.OriginY;
@@ -169,22 +206,26 @@ namespace BunBundle {
 
             string path = sprite.ImageAbsolutePaths[index];
 
-            if (path != oldPath) {
+
+            if (path != oldImportPath || sprite != oldImportSprite) {
                 if (File.Exists(path) == false) {
                     source = null;
                 }
                 else {
-
-                    if (setImageTask != null && setImageTask.IsCompleted) {
-                        taskCancelToken.Cancel();
-                        setImageTask = null;
-                    }
+                    oldImportSprite = sprite;
+                    oldImportPath = path;
 
                     image.Visibility = Visibility.Hidden;
 
-                    taskCancelToken = new CancellationTokenSource();
+                    if (imageImportImageTask != null && imageImportImageTask.IsCompleted == false) {
+                        this.imageImportCancelToken.Cancel();
+                        imageImportImageTask = null;
+                    }
 
-                    setImageTask = new Task(() => {
+                    CancellationTokenSource imageImportCancelToken = new CancellationTokenSource();
+                    this.imageImportCancelToken = imageImportCancelToken;
+
+                    imageImportImageTask = new Task(() => {
                         source = new BitmapImage();
                         source.BeginInit();
                         source.UriSource = new Uri(path);
@@ -193,17 +234,23 @@ namespace BunBundle {
                         source.EndInit();
                         source.Freeze();
 
+                        if (imageImportCancelToken.IsCancellationRequested) {
+                            return;
+                        }
+
                         Redraw();
+                        imageImportImageTask = null;
+                    }, imageImportCancelToken.Token);
 
-                    }, taskCancelToken.Token);
 
-
-                    setImageTask.Start();
+                    imageImportImageTask.Start();
                 }
 
             }
-            else if (sprite.OriginX != oldOriginX || sprite.OriginY != oldOriginY) {
-                Redraw();
+            else {
+                if (imageImportImageTask == null) {
+                    Redraw();
+                }
             }
         }
     }
