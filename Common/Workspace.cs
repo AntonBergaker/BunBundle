@@ -51,8 +51,10 @@ namespace BunBundle.Model {
 
         private void OpenProjectFile(string file) {
             JObject obj = JObject.Parse(File.ReadAllText(file));
-            targetFolder = (string)obj["targetDirectory"];
-            targetFolder = targetFolder.Replace('\\', Path.DirectorySeparatorChar);
+            targetFolder = obj.Value<string>("targetDirectory");
+            if (targetFolder != null) {
+                targetFolder = targetFolder.Replace('\\', Path.DirectorySeparatorChar);
+            }
         }
 
 

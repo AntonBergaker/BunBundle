@@ -148,7 +148,13 @@ namespace BunBundle.Model {
             importerClass.Unindent();
             importerClass.AddLine("}");
 
-            File.WriteAllText(Path.Combine(fullTargetFolder, "Generated", "SpriteLibrary.cs"), importerClass.ToString());
+            string targetFileName = Path.Combine(fullTargetFolder, "Generated", "SpriteLibrary.cs");
+
+            if (!Directory.Exists(Path.GetDirectoryName(targetFileName))) {
+                Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
+            }
+
+            File.WriteAllText(targetFileName, importerClass.ToString());
 
             // Delete the temp content
             File.Delete(contentPath);
