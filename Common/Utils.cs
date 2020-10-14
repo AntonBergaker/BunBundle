@@ -33,7 +33,7 @@ namespace BunBundle.Model {
             }
 
             // Item should now be root
-            return Path.Combine(item.Path, sb.ToString());
+            return Path.Combine(item.Storage.Path, sb.ToString());
         }
     }
 }

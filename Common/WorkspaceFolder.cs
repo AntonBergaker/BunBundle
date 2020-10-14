@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using BunBundle.Model.Saving;
 using BunBundle.Model;
+using BunBundle.Model.Storage;
 
 namespace BunBundle.Model {
     public class WorkspaceFolder : IWorkspaceItem {
@@ -18,17 +19,21 @@ namespace BunBundle.Model {
                 _name = value;
             }
         }
-        public string Path { get; set; }
+
+        public StorageItem Storage => StorageFolder;
+
+        public StorageFolder StorageFolder { get; internal set; }
+
         public Workspace Workspace { get; }
         public WorkspaceFolder Parent { get; set; }
         public List<WorkspaceFolder> subFolders;
         public List<Sprite> files;
 
-        public WorkspaceFolder(string name, string path, WorkspaceFolder parent) {
+        public WorkspaceFolder(string name,  WorkspaceFolder parent) {
             _name = name;
-            Workspace = parent?.Workspace;
+            Workspace = parent.Workspace;
             Parent = parent;
-            Path = path;
+            StorageFolder = new StorageFolder(parent.StorageFolder, this);
 
             subFolders = new List<WorkspaceFolder>();
             files = new List<Sprite>();
@@ -39,12 +44,18 @@ namespace BunBundle.Model {
             _name = name;
             Workspace = workspace;
             Parent = parent;
-            Path = path;
             subFolders = new List<WorkspaceFolder>();
             files = new List<Sprite>();
+            if (parent != null) {
+                StorageFolder = new StorageFolder(parent.StorageFolder, this);
+            }
+            else {
+                StorageFolder = StorageFolder.MakeRoot(path, this);
+            }
+
             foreach (string dir in Directory.GetDirectories(path)) {
                 if (Directory.GetFiles(dir, "*.spr").Length > 0) {
-                    files.Add(new Sprite(System.IO.Path.GetFileName(dir), dir, this));
+                    files.Add(new Sprite(System.IO.Path.GetFileName(dir), this));
                     continue;
                 }
 
@@ -85,7 +96,7 @@ namespace BunBundle.Model {
             Parent = targetFolder;
 
             Parent.subFolders.Add(this);
-            Workspace.AddSaveAction(new SaveActionMoved(this, Utils.GeneratePath(this)));
+            Workspace.AddSaveAction(new SaveActionMoved(this, targetFolder.StorageFolder));
         }
     }
 }

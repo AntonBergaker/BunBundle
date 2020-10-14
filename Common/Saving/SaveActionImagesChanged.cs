@@ -23,7 +23,7 @@ namespace BunBundle.Model.Saving {
                 }
             }
 
-            string[] paths = Directory.GetFiles(Path.Combine(Sprite.Path, "img"));
+            string[] paths = Directory.GetFiles(Path.Combine(Sprite.StorageSprite.Path, "img"));
             string[] truthTable = Sprite.ImagePaths.Select(x => Path.GetFileName(x)).ToArray();
 
             foreach (string path in paths) {
@@ -40,9 +40,9 @@ namespace BunBundle.Model.Saving {
 
             for (int index = 0; index < sprite.ImagePaths.Count; index++) {
                 string spriteImagePath = sprite.ImagePaths[index];
-                string fullPath = Path.Combine(sprite.Path, "img", spriteImagePath);
-                string newPath = Path.Combine(sprite.Path, "img", sprite.Name + index + ".png");
-                string tempPath = Path.Combine(sprite.Path, "img", sprite.Name + index + "_temp_for_moving_about" + ".png");
+                string fullPath = Path.Combine(sprite.StorageSprite.Path, "img", spriteImagePath);
+                string newPath = Path.Combine(sprite.StorageSprite.Path, "img", sprite.Name + index + ".png");
+                string tempPath = Path.Combine(sprite.StorageSprite.Path, "img", sprite.Name + index + "_temp_for_moving_about" + ".png");
 
                 File.Move(fullPath, tempPath);
 

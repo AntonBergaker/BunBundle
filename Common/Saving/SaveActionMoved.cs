@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using BunBundle.Model.Storage;
 
 namespace BunBundle.Model.Saving {
     class SaveActionMoved : SaveAction {
-        private readonly string newPath;
+        private readonly StorageFolder newParent;
         public override IWorkspaceItem Item { get; }
 
-        public SaveActionMoved(IWorkspaceItem item, string newPath) {
-            this.newPath = newPath;
+        public SaveActionMoved(IWorkspaceItem item, StorageFolder newParent) {
+            this.newParent = newParent;
             Item = item;
         }
 
         public override void Run(out bool shouldSave) {
             shouldSave = true;
-            if (Item is Sprite sprite) {
-                MoveSprite(sprite, newPath);
-                return;
-            }
-
-            if (Item is WorkspaceFolder folder) {
-                MoveFolder(folder, newPath);
-            }            
+            Item.Storage.Move(newParent);
         }
     }
 }

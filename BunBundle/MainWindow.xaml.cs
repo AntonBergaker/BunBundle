@@ -424,7 +424,7 @@ namespace BunBundle {
             if (model == null) {
                 return;
             }
-            OpenFolder(model.Source.Path);
+            OpenFolder(model.Source.Storage.Path);
         }
 
         private void MenuDelete_OnClick(object sender, RoutedEventArgs e) {

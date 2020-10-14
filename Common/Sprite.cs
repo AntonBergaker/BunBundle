@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using io = System.IO;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BunBundle.Model.Saving;
+using BunBundle.Model.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace BunBundle.Model {
     public class Sprite : IWorkspaceItem {
         public readonly Workspace Workspace;
+        public StorageItem Storage => StorageSprite;
+
+        public StorageSprite StorageSprite { get; }
+
         public WorkspaceFolder Parent { get; set; }
 
         private string _name;
@@ -26,8 +30,6 @@ namespace BunBundle.Model {
                 _name = value;
             }
         }
-
-        public string Path { get; set; }
 
         public void Delete() {
             Parent.files.Remove(this);
@@ -92,25 +94,25 @@ namespace BunBundle.Model {
 
         public IReadOnlyList<string> ImagePaths => imagePaths;
 
-        public IReadOnlyList<string> ImageAbsolutePaths => imagePaths.Select(x => System.IO.Path.Combine(Path, "img", x)).ToList();
+        public IReadOnlyList<string> ImageAbsolutePaths => imagePaths.Select(x => Path.Combine(StorageSprite.Path, "img", x)).ToList();
 
-        protected string MetaFile => System.IO.Path.Combine(Path, System.IO.Path.GetFileName(Path) + ".spr");
+        protected string MetaFile => Path.Combine(StorageSprite.Path, Path.GetFileName(StorageSprite.Path) + ".spr");
 
-        public Sprite(string name, string path, WorkspaceFolder parent) {
+        public Sprite(string name, WorkspaceFolder parent) {
             _name = name;
-            Path = path;
+            StorageSprite = new StorageSprite(parent.StorageFolder, this);
             this.Parent = parent;
             Workspace = parent?.Workspace;
             Load();
         }
 
-        public Sprite(string name, string path, Workspace workspace) : this(name, path, (WorkspaceFolder)null) {
+        public Sprite(string name, Workspace workspace) : this(name, (WorkspaceFolder)null) {
             Workspace = workspace;
         }
 
-        private Sprite(string name, string path, string[] imagePaths, WorkspaceFolder parent) {
+        private Sprite(string name, string[] imagePaths, WorkspaceFolder parent) {
             _name = name;
-            Path = path;
+            StorageSprite = new StorageSprite(parent.StorageFolder, this);
             this.imagePaths = imagePaths;
             Workspace = parent.Workspace;
             this.Parent = parent;
@@ -129,7 +131,7 @@ namespace BunBundle.Model {
             var obj = new {
                 origin = new {x = OriginX, y = OriginY},
                 texturePage = "default",
-                images = ImagePaths.Select(x => io.Path.GetFileName(x)).ToArray()
+                images = ImagePaths.Select(x => Path.GetFileName(x)).ToArray()
             };
 
             File.WriteAllText(MetaFile, JsonConvert.SerializeObject(obj), Encoding.UTF8);
@@ -154,7 +156,7 @@ namespace BunBundle.Model {
             for (int i = 0; i < sourcePaths.Length; i++) {
                 int imageCount = imagePaths.Length + i;
                 relativePaths[i] = Name + imageCount + ".png";
-                string targetPath = io.Path.Combine(Path, "img", relativePaths[i]);
+                string targetPath = Path.Combine(StorageSprite.Path, "img", relativePaths[i]);
 
                 File.Copy(sourcePaths[i], targetPath, true);
             }
@@ -176,10 +178,10 @@ namespace BunBundle.Model {
 
             Workspace.AddSaveAction(new SaveActionImagesChanged(this));
         }
-        public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder, Workspace workspace) {
-            string folder = io.Path.Combine(targetFolder.Path, name);
+        public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder) {
+            string folder = Path.Combine(targetFolder.Storage.Path, name);
 
-            string imageFolder = io.Path.Combine(folder, "img");
+            string imageFolder = Path.Combine(folder, "img");
             if (Directory.Exists(folder) == false) {
                 Directory.CreateDirectory(folder);
             }
@@ -189,11 +191,11 @@ namespace BunBundle.Model {
             }
 
             string[] relativePaths = sourcePaths.Select((_, i) => name + i + ".png").ToArray();
-            string[] imagePaths = sourcePaths.Select((_, i) => io.Path.Combine(folder, "img", relativePaths[i])).ToArray();
+            string[] imagePaths = sourcePaths.Select((_, i) => Path.Combine(folder, "img", relativePaths[i])).ToArray();
 
             sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i], true));
 
-            Sprite spr = new Sprite(name, folder, relativePaths, targetFolder);
+            Sprite spr = new Sprite(name, imagePaths, targetFolder);
             spr.Save();
 
             return spr;
@@ -205,7 +207,7 @@ namespace BunBundle.Model {
 
             Parent.files.Add(this);
 
-            Workspace.AddSaveAction(new SaveActionMoved(this, Utils.GeneratePath(this)));
+            Workspace.AddSaveAction(new SaveActionMoved(this, targetFolder.StorageFolder));
         }
     }
 }

@@ -18,7 +18,7 @@ namespace BunBundle.Model {
 
         public bool Unsaved => savingManager.UnsavedChanges;
 
-        private string SaveFilePath => Path.Combine(RootFolder.Path, "sprites.sprm");
+        private string SaveFilePath => Path.Combine(RootFolder.StorageFolder.Path, "sprites.sprm");
 
 
 
@@ -63,7 +63,7 @@ namespace BunBundle.Model {
 
             string newName = Path.GetFileNameWithoutExtension(paths[0]);
 
-            Sprite spr = Sprite.Create(newName, paths, target, this);
+            Sprite spr = Sprite.Create(newName, paths, target);
 
             target.files.Add(spr);
 
@@ -83,9 +83,9 @@ namespace BunBundle.Model {
                 break;
             }
 
-            WorkspaceFolder folder = new WorkspaceFolder(newName, Path.Combine(target.Path, newName), target);
-            if (!Directory.Exists(folder.Path)) {
-                Directory.CreateDirectory(folder.Path);
+            WorkspaceFolder folder = new WorkspaceFolder(newName, target);
+            if (!Directory.Exists(folder.Storage.Path)) {
+                Directory.CreateDirectory(folder.Storage.Path);
             }
 
             target.subFolders.Add(folder);
@@ -97,7 +97,7 @@ namespace BunBundle.Model {
 
             Builder builder = new Builder();
 
-            builder.Build(RootFolder, RootFolder.Path, targetFolder);
+            builder.Build(RootFolder, RootFolder.Storage.Path, targetFolder);
 
         }
 

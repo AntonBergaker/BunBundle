@@ -13,7 +13,7 @@ namespace BunBundle.Model.Saving {
 
         public override void Run(out bool shouldSave) {
             shouldSave = false;
-            Directory.Delete(Item.Path, true);
+            Directory.Delete(Item.Storage.Path, true);
         }
     }
 }
