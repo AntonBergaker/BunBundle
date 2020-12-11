@@ -3,17 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundleConsole", "MonogameTexturePackerConsole\BunBundleConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundleConsole", "BunBundleConsole\BunBundleConsole.csproj", "{69639F86-A25B-425D-9555-CC7587CA1873}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BunBundle.Model", "Common\BunBundle.Model.shproj", "{1FEC7127-480C-40B4-9E23-3612FF3956D1}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BunBundle.Model", "BunBundle.Model\BunBundle.Model.shproj", "{1FEC7127-480C-40B4-9E23-3612FF3956D1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundle", "BunBundle\BunBundle.csproj", "{2CE86BDF-6965-4308-9A1C-794C9100CB77}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Common\Common.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
-		Common\Common.projitems*{2ce86bdf-6965-4308-9a1c-794c9100cb77}*SharedItemsImports = 5
-		Common\Common.projitems*{69639f86-a25b-425d-9555-cc7587ca1873}*SharedItemsImports = 5
+		BunBundle.Model\Common.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
