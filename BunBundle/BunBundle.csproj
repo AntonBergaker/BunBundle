@@ -41,6 +41,7 @@
     </None>
   </ItemGroup>
 
-  <Import Project="..\Common\Common.projitems" Label="Shared" />
+  <Import Project="..\BunBundle.Model\Common.projitems" Label="Shared" />
+
 
 </Project>
