@@ -48,9 +48,9 @@ namespace BunBundle {
         public Visibility SpriteVisibility => selectedItem is SpriteViewModel ? Visibility.Visible : Visibility.Hidden;
         public Visibility AnyVisibility => workspace != null ? Visibility.Visible : Visibility.Hidden;
 
-        public SpriteViewModel SelectedSprite => selectedItem as SpriteViewModel;
+        public SpriteViewModel? SelectedSprite => selectedItem as SpriteViewModel;
 
-        public TreeItemViewModel SelectedItem {
+        public TreeItemViewModel? SelectedItem {
             get => selectedItem;
             set {
                 selectedItem = value;
@@ -319,7 +319,7 @@ namespace BunBundle {
         }
 
         private void comboBoxOrigin_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            SpriteViewModel selectedSprite = (SelectedItem as SpriteViewModel);
+            SpriteViewModel? selectedSprite = (SelectedItem as SpriteViewModel);
 
             if (selectedSprite == null) {
                 return;
@@ -370,7 +370,7 @@ namespace BunBundle {
         }
 
         private void AddSpritesButton_Click(object sender, RoutedEventArgs e) {
-            SpriteViewModel sprite = selectedItem as SpriteViewModel;
+            SpriteViewModel? sprite = selectedItem as SpriteViewModel;
 
             if (sprite == null) {
                 return;
@@ -384,7 +384,7 @@ namespace BunBundle {
         }
 
         private void ReplaceSpritesButton_Click(object sender, RoutedEventArgs e) {
-            SpriteViewModel sprite = selectedItem as SpriteViewModel;
+            SpriteViewModel? sprite = selectedItem as SpriteViewModel;
 
             if (sprite == null) {
                 return;
@@ -419,7 +419,7 @@ namespace BunBundle {
         }
 
         private void MenuOpenInExplorer_OnClick(object sender, RoutedEventArgs e) {
-            TreeItemViewModel model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
+            TreeItemViewModel? model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
 
             if (model == null) {
                 return;
@@ -428,7 +428,7 @@ namespace BunBundle {
         }
 
         private void MenuDelete_OnClick(object sender, RoutedEventArgs e) {
-            TreeItemViewModel model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
+            TreeItemViewModel? model = ((((sender as MenuItem)?.Parent as ContextMenu)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.Header as TreeItemViewModel;
 
             model?.Delete();
         }
@@ -451,13 +451,13 @@ namespace BunBundle {
         #region Drag and drop for treeview
 
         private Point tvLastMouseDown;
-        private TreeItemViewModel tvDraggedItem;
-        private TreeItemViewModel tvTargetItem;
+        private TreeItemViewModel? tvDraggedItem;
+        private TreeItemViewModel? tvTargetItem;
 
-        private TreeItemViewModel GetNearestContainer(UIElement element) {
+        private TreeItemViewModel? GetNearestContainer(UIElement? element) {
 
             // Walk up the element tree to the nearest tree view item.
-            TreeViewItem container = element as TreeViewItem;
+            TreeViewItem? container = element as TreeViewItem;
             while ((container == null) && (element != null)) {
                 element = VisualTreeHelper.GetParent(element) as UIElement;
                 container = element as TreeViewItem;
@@ -467,7 +467,7 @@ namespace BunBundle {
             
         }
 
-        private bool CheckDropTarget(TreeItemViewModel source, TreeItemViewModel target) {
+        private bool CheckDropTarget(TreeItemViewModel? source, TreeItemViewModel? target) {
             FolderViewModel targetFolder;
             switch (target) {
                 case FolderViewModel tFolder:
@@ -482,7 +482,7 @@ namespace BunBundle {
 
 
             // Make sure my new folder isn't the same as my current one
-            if (source.Parent == targetFolder) {
+            if (source?.Parent == targetFolder) {
                 return false;
             }
 
@@ -527,7 +527,7 @@ namespace BunBundle {
             if ((Math.Abs(currentPosition.X - tvLastMouseDown.X) > 10.0) ||
                 (Math.Abs(currentPosition.Y - tvLastMouseDown.Y) > 10.0)) {
                 // Verify that this is a valid drop and then store the drop target
-                TreeItemViewModel item = GetNearestContainer(e.OriginalSource as UIElement);
+                TreeItemViewModel? item = GetNearestContainer(e.OriginalSource as UIElement);
                 if (CheckDropTarget(tvDraggedItem, item)) {
                     e.Effects = DragDropEffects.Move;
                 } else {
@@ -544,7 +544,7 @@ namespace BunBundle {
             e.Handled = true;
 
             // Verify that this is a valid drop and then store the drop target
-            TreeItemViewModel TargetItem = GetNearestContainer(e.OriginalSource as UIElement);
+            TreeItemViewModel? TargetItem = GetNearestContainer(e.OriginalSource as UIElement);
             if (TargetItem != null && tvDraggedItem != null) {
                 tvTargetItem = TargetItem;
                 e.Effects = DragDropEffects.Move;

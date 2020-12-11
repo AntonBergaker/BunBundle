@@ -25,7 +25,7 @@ namespace BunBundle.Model {
         public StorageFolder StorageFolder { get; internal set; }
 
         public Workspace Workspace { get; }
-        public WorkspaceFolder Parent { get; set; }
+        public WorkspaceFolder? Parent { get; set; }
         public List<WorkspaceFolder> subFolders;
         public List<Sprite> files;
 
@@ -40,7 +40,7 @@ namespace BunBundle.Model {
         }
 
         // Used for importing
-        private WorkspaceFolder(string name, string path, Workspace workspace, WorkspaceFolder parent) {
+        private WorkspaceFolder(string name, string path, Workspace workspace, WorkspaceFolder? parent) {
             _name = name;
             Workspace = workspace;
             Parent = parent;
@@ -79,7 +79,7 @@ namespace BunBundle.Model {
 
 
         public void Delete() {
-            Parent.subFolders.Remove(this);
+            Parent?.subFolders.Remove(this);
             Workspace.AddSaveAction(new SaveActionDelete(this));
         }
 
@@ -92,7 +92,7 @@ namespace BunBundle.Model {
             return sprites;
         }
         public void MoveTo(WorkspaceFolder targetFolder) {
-            Parent.RemoveChild(this);
+            Parent?.RemoveChild(this);
             Parent = targetFolder;
 
             Parent.subFolders.Add(this);

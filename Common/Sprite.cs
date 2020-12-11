@@ -20,14 +20,14 @@ namespace BunBundle.Model {
 
         public WorkspaceFolder Parent { get; set; }
 
-        private string _name;
+        private string name;
 
         public string Name {
-            get => _name;
+            get => name;
             set {
-                if (_name == value) return;
+                if (name == value) return;
                 Workspace.AddSaveAction(new SaveActionRename(this, value));
-                _name = value;
+                name = value;
             }
         }
 
@@ -99,19 +99,15 @@ namespace BunBundle.Model {
         protected string MetaFile => Path.Combine(StorageSprite.Path, Path.GetFileName(StorageSprite.Path) + ".spr");
 
         public Sprite(string name, WorkspaceFolder parent) {
-            _name = name;
+            this.name = name;
             StorageSprite = new StorageSprite(parent.StorageFolder, this);
             this.Parent = parent;
-            Workspace = parent?.Workspace;
+            Workspace = parent.Workspace;
             Load();
         }
 
-        public Sprite(string name, Workspace workspace) : this(name, (WorkspaceFolder)null) {
-            Workspace = workspace;
-        }
-
         private Sprite(string name, string[] imagePaths, WorkspaceFolder parent) {
-            _name = name;
+            this.name = name;
             StorageSprite = new StorageSprite(parent.StorageFolder, this);
             this.imagePaths = imagePaths;
             Workspace = parent.Workspace;

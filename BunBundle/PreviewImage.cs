@@ -22,7 +22,7 @@ namespace BunBundle {
         private readonly Image image;
 
         private Sprite sprite;
-        private BitmapImage source;
+        private BitmapImage? source;
         private int index;
 
         private Sprite oldImportSprite;
@@ -33,7 +33,7 @@ namespace BunBundle {
         private Sprite oldRedrawSprite;
         private string oldRedrawPath = "";
 
-        private Task imageImportImageTask;
+        private Task? imageImportImageTask;
         private CancellationTokenSource imageImportCancelToken;
 
         private Task redrawTask;

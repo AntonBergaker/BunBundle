@@ -23,7 +23,8 @@ namespace BunBundle.Model.Storage {
             Name = folder.Name;
         }
 
-        public StorageFolder(StorageFolder parent, WorkspaceFolder folder) : base(parent) {
+        public StorageFolder(StorageFolder? parent, WorkspaceFolder folder) : base(parent) {
+            RootPath = null!;
             IsRoot = false;
             children = new List<StorageItem>();
             Folder = folder;

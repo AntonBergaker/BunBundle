@@ -7,15 +7,16 @@ namespace BunBundle.Model.Storage {
     public abstract class StorageItem {
 
         public abstract IWorkspaceItem Item { get; }
-        public StorageFolder Parent { protected internal set; get; }
+        public StorageFolder? Parent { protected internal set; get; }
 
         public string Name { protected set; get;}
 
-        public virtual string Path => System.IO.Path.Combine(Parent.Path, Name); 
+        public virtual string Path => System.IO.Path.Combine(Parent?.Path ?? throw new NullReferenceException("No parent"), Name); 
 
-        protected StorageItem(StorageFolder parent) {
+        protected StorageItem(StorageFolder? parent) {
             Parent = parent;
             parent?.AddChild(this);
+            Name = "";
         }
 
         protected void RunFunctionRecursive(IWorkspaceItem item, Action<IWorkspaceItem> action) {

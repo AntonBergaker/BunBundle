@@ -9,5 +9,8 @@ namespace BunBundle.Model.Saving {
 
         public abstract void Run(out bool shouldSave);
 
+        public virtual bool TryMerge(SaveAction previous) {
+            return false;
+        }
     }
 }

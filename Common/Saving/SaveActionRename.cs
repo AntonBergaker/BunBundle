@@ -6,7 +6,7 @@ using System.Text;
 namespace BunBundle.Model.Saving {
     public class SaveActionRename : SaveAction {
         public override IWorkspaceItem Item { get; }
-        public string NewName { get; }
+        public string NewName { get; private set; }
 
         public SaveActionRename(IWorkspaceItem item, string newName) {
             Item = item;
@@ -18,5 +18,16 @@ namespace BunBundle.Model.Saving {
 
             Item.Storage.Rename(NewName);
         }
+
+        public override bool TryMerge(SaveAction previous) {
+            if (previous is SaveActionRename) {
+                if (previous.Item == Item) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     }
 }
