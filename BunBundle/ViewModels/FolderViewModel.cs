@@ -70,7 +70,7 @@ namespace BunBundle {
             }
         }
 
-        public FolderViewModel(WorkspaceFolder folder, FolderViewModel parent) {
+        public FolderViewModel(WorkspaceFolder folder, FolderViewModel? parent) {
             Folder = folder;
             Parent = parent;
 
@@ -87,6 +87,9 @@ namespace BunBundle {
         }
 
         public override void Delete() {
+            if (Parent == null) {
+                throw new NullReferenceException("Can't delete the root folder");
+            }
             Parent.Items.Remove(this);
             Parent.CheckHavingSpriteChildren();
             Folder.Delete();
@@ -118,7 +121,7 @@ namespace BunBundle {
 
         private static int CompareItems(TreeItemViewModel a, TreeItemViewModel b) {
             if (a.GetType() == b.GetType()) {
-                return a.Name.CompareTo(b.Name);
+                return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
             }
 
             if (a is FolderViewModel) {

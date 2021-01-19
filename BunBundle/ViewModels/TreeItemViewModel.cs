@@ -48,7 +48,7 @@ namespace BunBundle {
 
         public abstract void MoveTo(FolderViewModel target);
 
-        public FolderViewModel Parent;
+        public FolderViewModel? Parent;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

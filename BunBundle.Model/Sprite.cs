@@ -174,6 +174,15 @@ namespace BunBundle.Model {
 
             Workspace.AddSaveAction(new SaveActionImagesChanged(this));
         }
+
+        public void RemoveImage(int index) {
+            List<string> imagePathList = imagePaths.ToList();
+            imagePathList.RemoveAt(index);
+            imagePaths = imagePathList.ToArray();
+            Workspace.AddSaveAction(new SaveActionImagesChanged(this));
+        }
+
+
         public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder) {
             string folder = Path.Combine(targetFolder.Storage.Path, name);
 
@@ -205,5 +214,6 @@ namespace BunBundle.Model {
 
             Workspace.AddSaveAction(new SaveActionMoved(this, targetFolder.StorageFolder));
         }
+
     }
 }

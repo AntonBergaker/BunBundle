@@ -21,23 +21,23 @@ namespace BunBundle {
     class PreviewImage {
         private readonly Image image;
 
-        private Sprite sprite;
+        private Sprite? sprite;
         private BitmapImage? source;
         private int index;
 
-        private Sprite oldImportSprite;
+        private Sprite? oldImportSprite;
         private string oldImportPath = "";
 
         private double oldRedrawOriginX;
         private double oldRedrawOriginY;
-        private Sprite oldRedrawSprite;
+        private Sprite? oldRedrawSprite;
         private string oldRedrawPath = "";
 
         private Task? imageImportImageTask;
-        private CancellationTokenSource imageImportCancelToken;
+        private CancellationTokenSource? imageImportCancelToken;
 
-        private Task redrawTask;
-        private CancellationTokenSource redrawCancelToken;
+        private Task? redrawTask;
+        private CancellationTokenSource? redrawCancelToken;
 
 
         public PreviewImage(Image image) {
@@ -64,7 +64,7 @@ namespace BunBundle {
             OnOriginSet?.Invoke(this, p);
         }
 
-        public EventHandler<Point> OnOriginSet;
+        public EventHandler<Point>? OnOriginSet;
 
 
         private Point GetImagePoint(MouseEventArgs e) {
@@ -110,7 +110,12 @@ namespace BunBundle {
             oldRedrawOriginX = sprite.OriginX;
             oldRedrawOriginY = sprite.OriginY;
             oldRedrawSprite = sprite;
-            oldRedrawPath = sprite.ImageAbsolutePaths[index];
+            if (sprite.ImageAbsolutePaths.Count < index) {
+                oldRedrawPath = sprite.ImageAbsolutePaths[index];
+            }
+            else {
+                oldRedrawPath = "";
+            }
 
             if (redrawTask != null && redrawTask.IsCompleted == false) {
                 redrawCancelToken.Cancel();
@@ -204,12 +209,20 @@ namespace BunBundle {
             this.sprite = sprite;
             this.index = index;
 
-            string path = sprite.ImageAbsolutePaths[index];
+            string path;
 
+            if (index >= sprite.ImageAbsolutePaths.Count) {
+                path = "";
+            }
+            else {
+                path = sprite.ImageAbsolutePaths[index];
+            }
+            
 
             if (path != oldImportPath || sprite != oldImportSprite) {
                 if (File.Exists(path) == false) {
                     source = null;
+                    Redraw();
                 }
                 else {
                     oldImportSprite = sprite;

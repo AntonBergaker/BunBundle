@@ -23,19 +23,21 @@ namespace BunBundle {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged {
-        private Workspace _workspace;
+        private Workspace? workspace;
 
-        private Workspace workspace {
-            get => _workspace;
+        private Workspace? Workspace {
+            get => workspace;
             set {
-                _workspace = value;
-                _workspace.OnImportSprite += WorkspaceOnOnImportSprite;
-                _workspace.OnAddFolder += WorkspaceOnOnAddFolder;
-                _workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
+                workspace = value;
+                if (workspace != null) {
+                    workspace.OnImportSprite += WorkspaceOnOnImportSprite;
+                    workspace.OnAddFolder += WorkspaceOnOnAddFolder;
+                    workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
+                    PopulateTreeView();
+                }
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(AnyVisibility));
-                PopulateTreeView();
             }
         }
 
@@ -43,10 +45,12 @@ namespace BunBundle {
 
         private readonly PreviewImage previewImageHandler;
 
-        private TreeItemViewModel selectedItem;
+        private TreeItemViewModel? selectedItem;
 
         public Visibility SpriteVisibility => selectedItem is SpriteViewModel ? Visibility.Visible : Visibility.Hidden;
-        public Visibility AnyVisibility => workspace != null ? Visibility.Visible : Visibility.Hidden;
+        public Visibility AnyVisibility => Workspace != null ? Visibility.Visible : Visibility.Hidden;
+
+        public Visibility AnySelected => selectedItem != null ? Visibility.Visible : Visibility.Hidden;
 
         public SpriteViewModel? SelectedSprite => selectedItem as SpriteViewModel;
 
@@ -57,6 +61,7 @@ namespace BunBundle {
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SpriteVisibility));
                 OnPropertyChanged(nameof(SelectedSprite));
+                OnPropertyChanged(nameof(AnySelected));
             }
         }
 
@@ -117,8 +122,8 @@ namespace BunBundle {
             ModifyTheme();
         }
 
-        private void WorkspaceOnOnUnsavedChanged(object sender, bool unsaved) {
-            if (workspace.Unsaved) {
+        private void WorkspaceOnOnUnsavedChanged(object? sender, bool unsaved) {
+            if (workspace != null && workspace.Unsaved) {
                 this.Title = "BunBundle*";
             } else {
                 this.Title = "BunBundle";
@@ -142,8 +147,8 @@ namespace BunBundle {
             }
         }
 
-        private void WorkspaceOnOnImportSprite(object sender, (WorkspaceFolder parentFolder, Sprite sprite) e) {
-            FolderViewModel parent = itemToViewModels[e.parentFolder] as FolderViewModel;
+        private void WorkspaceOnOnImportSprite(object? sender, (WorkspaceFolder parentFolder, Sprite sprite) e) {
+            FolderViewModel parent = (FolderViewModel)itemToViewModels[e.parentFolder];
             SpriteViewModel newNode = new SpriteViewModel(e.sprite, parent);
 
             itemToViewModels.Add(e.sprite, newNode);
@@ -155,8 +160,8 @@ namespace BunBundle {
         }
 
 
-        private void WorkspaceOnOnAddFolder(object sender, (WorkspaceFolder parentFolder, WorkspaceFolder folder) e) {
-            FolderViewModel parent = itemToViewModels[e.parentFolder] as FolderViewModel;
+        private void WorkspaceOnOnAddFolder(object? sender, (WorkspaceFolder parentFolder, WorkspaceFolder folder) e) {
+            FolderViewModel parent = (FolderViewModel)itemToViewModels[e.parentFolder];
 
 
             FolderViewModel newNode = new FolderViewModel(e.folder, parent);
@@ -170,14 +175,17 @@ namespace BunBundle {
         }
 
         private void Save() {
-            workspace.Save();
+            Workspace?.Save();
         }
 
         private void LoadFolder(string path) {
-            workspace = new Workspace(path);
+            Workspace = new Workspace(path);
         }
 
         private void PopulateTreeView() {
+            if (workspace == null) {
+                return;
+            }
             rootViewModel = new FolderViewModel(workspace.RootFolder, null);
             folderView.ItemsSource = rootViewModel.Items;
             AddToDictionary(rootViewModel);
@@ -220,7 +228,7 @@ namespace BunBundle {
 
         private void PopulateFolderProperties(WorkspaceFolder folder) {
             textBoxName.SetCurrentValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, "Folder Name");
-            textBoxName.Text = SelectedItem.Name;
+            textBoxName.Text = folder.Name;
         }
 
         private void UpdateOriginSelection(SpriteViewModel selectedSprite) {
@@ -258,7 +266,7 @@ namespace BunBundle {
         }
 
         private void buttonBuild_Click(object sender, RoutedEventArgs e) {
-            workspace.Build();
+            Workspace?.Build();
         }
 
         private void folderView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
@@ -302,7 +310,7 @@ namespace BunBundle {
             }
         }
 
-        private void OnOriginSet(object sender, Point e) {
+        private void OnOriginSet(object? sender, Point e) {
             if (SelectedItem is SpriteViewModel selectedSprite) {
                 selectedSprite.OriginX = (float)e.X;
                 selectedSprite.OriginY = (float)e.Y;
@@ -350,7 +358,7 @@ namespace BunBundle {
 
         private void buttonNewFolder_Click(object sender, RoutedEventArgs e) {
 
-            workspace.CreateFolder(GetSelectedFolder().Folder);
+            Workspace?.CreateFolder(GetSelectedFolder().Folder);
         }
 
         private OpenFileDialog MakeOpenSpritesDialog() {
@@ -365,7 +373,7 @@ namespace BunBundle {
             OpenFileDialog dialog = MakeOpenSpritesDialog();
 
             if (dialog.ShowDialog() == true) {
-                workspace.ImportSprites(dialog.FileNames, GetSelectedFolder().Folder);
+                Workspace.ImportSprites(dialog.FileNames, GetSelectedFolder().Folder);
             }
         }
 
@@ -407,7 +415,7 @@ namespace BunBundle {
             
 
             if (dialog.ShowDialog() == true) {
-                workspace = new Workspace(dialog.SelectedPath);
+                Workspace = new Workspace(dialog.SelectedPath);
             }
         }
 

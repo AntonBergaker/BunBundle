@@ -58,7 +58,7 @@ namespace BunBundle {
 
             SubImages = new ObservableCollection<SubImageViewModel>();
             for (int i=0; i < sprite.ImageAbsolutePaths.Count; i++) {
-                SubImages.Add(new SubImageViewModel(sprite, i));
+                SubImages.Add(new SubImageViewModel(this, i));
             }
         }
 
@@ -113,6 +113,14 @@ namespace BunBundle {
 
         public void AddImages(string[] fileNames) {
             Sprite.AddImages(fileNames);
+        }
+
+        public void RemoveSubImage(int index) {
+            Sprite.RemoveImage(index);
+            SubImages.RemoveAt(index);
+            for (int i = index; i < SubImages.Count; i++) {
+                SubImages[i].Index = i;
+            }
         }
     }
 }
