@@ -445,6 +445,25 @@ namespace BunBundle {
             Save();
         }
 
+        private void MenuNewProject_OnClick(object sender, RoutedEventArgs e) {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "Bunbundle File (*.bubu)|*bubu";
+            dialog.Title = "Save new project file";
+            dialog.DefaultExt = ".bubu";
+            dialog.FileName = "sprites";
+
+            if (dialog.ShowDialog() == true) {
+                try {
+                    Workspace.CreateNew(dialog.FileName);
+                    LoadFile(dialog.FileName);
+                }
+                catch (Exception ex) {
+                    MessageBox.Show(ex.ToString());
+                }
+            }
+        }
+
+
         private void MenuOpenFolder_OnClick(object sender, RoutedEventArgs e) {
 
             OpenFileDialog dialog = new OpenFileDialog();

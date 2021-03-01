@@ -6,11 +6,13 @@ using System.Text.Json;
 
 namespace BunBundle.Model {
     public static class JsonSettings {
-        public static JsonSerializerOptions GetDeserializeOptions() {
+
+        public static JsonSerializerOptions GetSerializeOptions() {
             return new JsonSerializerOptions {
-                PropertyNamingPolicy = new JsonPascalCaseifier(),
+                PropertyNamingPolicy = new JsonSnakeCaseifier(),
                 AllowTrailingCommas = true,
-                ReadCommentHandling = JsonCommentHandling.Skip
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                WriteIndented = true
             };
         }
     }
@@ -22,9 +24,4 @@ namespace BunBundle.Model {
 
     }
 
-    class JsonPascalCaseifier : JsonNamingPolicy {
-        public override string ConvertName(string name) {
-            return Utils.SnakecaseToPascal(name);
-        }
-    }
 }

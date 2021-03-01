@@ -39,25 +39,23 @@ namespace BunBundle.Model {
         }
 
 
-        private Sprite[] GetAllSprites() {
-            return RootFolder.GetAllSprites().ToArray();
+
+
+
+        public static void CreateNew(string path) {
+            Settings settings = new Settings("", "content/Generated/", "Sprites.cs", "Sprites", "");
+            WriteSaveFile(path, settings);
         }
 
         [MemberNotNull(nameof(RootFolder))]
         [MemberNotNull(nameof(settings))]
         private void Open(string file) {
-
-            OpenProjectFile(file);
-            
-            if (settings == null) {
-                settings = new Settings("", "", "", "");
-                Save();
-            }
+            ImportSettings(file);
 
             RootFolder = WorkspaceFolder.Import(Path.GetDirectoryName(file)!, this);
         }
 
-        private void OpenProjectFile(string file) {
+        private void ImportSettings(string file) {
             string text;
             try {
                 text = File.ReadAllText(file);
@@ -70,7 +68,7 @@ namespace BunBundle.Model {
             Settings? obj;
             try {
                 obj = JsonSerializer.Deserialize<Settings>(text,
-                    JsonSettings.GetDeserializeOptions());
+                    JsonSettings.GetSerializeOptions());
             }
             catch (Exception ex) {
                 RaiseError(new Error(ex));
@@ -85,10 +83,13 @@ namespace BunBundle.Model {
             settings = obj;
         }
 
+        private static void WriteSaveFile(string path, Settings settings) {
+            File.WriteAllText(path, JsonSerializer.Serialize(settings, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
+        }
+        
         public void Save() {
-            JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = new JsonSnakeCaseifier() };
             try {
-                File.WriteAllText(SaveFilePath, JsonSerializer.Serialize(settings, options), Encoding.UTF8);
+                WriteSaveFile(SaveFilePath, settings);
             }
             catch (Exception ex) {
                 RaiseError(new Error(ex));
@@ -136,6 +137,14 @@ namespace BunBundle.Model {
         }
 
         public void Build() {
+            if (string.IsNullOrEmpty(settings.TargetDirectory)) {
+                RaiseError(new Error("The field target_directory is not set for the current project."));
+                return;
+            }
+            if (string.IsNullOrEmpty(settings.Namespace)) {
+                RaiseError(new Error("The field namespace is not set for the current project."));
+                return;
+            }
 
             Builder builder = new Builder(settings);
 

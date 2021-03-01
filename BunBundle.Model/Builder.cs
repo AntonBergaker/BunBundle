@@ -17,6 +17,14 @@ namespace BunBundle.Model {
 
         public Builder(Settings settings) {
             this.settings = settings;
+
+            if (string.IsNullOrEmpty(settings.ClassName)) {
+                throw new ArgumentException("Missing ClassName", nameof(settings));
+            }
+
+            if (string.IsNullOrEmpty(settings.TargetDirectory)) {
+                throw new ArgumentException("Missing TargetDirectory", nameof(settings));
+            }
         }
         
         /// <summary>
@@ -53,10 +61,10 @@ namespace BunBundle.Model {
         public void Build(WorkspaceFolder workspaceFolder, string rootFolder) {
             string fullTargetFolder;
             if (Path.IsPathFullyQualified(settings.TargetSpriteDirectory)) {
-                fullTargetFolder = settings.TargetSpriteDirectory;
+                fullTargetFolder = settings.TargetDirectory;
             }
             else {
-                fullTargetFolder = Path.Combine(rootFolder, settings.TargetSpriteDirectory);
+                fullTargetFolder = Path.Combine(rootFolder, settings.TargetDirectory);
             }
 
             string cacheFolder = Path.GetFullPath(Path.Combine(rootFolder, "..", "__build_cache"));
@@ -107,7 +115,7 @@ namespace BunBundle.Model {
 
 
             // Run the MGCB
-            string contentDir = Path.Combine(fullTargetFolder, "Content", "Generated" );
+            string contentDir = Path.Combine(fullTargetFolder, settings.TargetSpriteDirectory );
             string contentPath = Path.Combine(contentDir, "GeneratedContent.mgcb");
             Console.WriteLine("NEW PATH: " + contentPath);
 
@@ -148,7 +156,7 @@ namespace BunBundle.Model {
             importerClass.AddLines(
                 "using Microsoft.Xna.Framework;",
                 "using Microsoft.Xna.Framework.Content;",
-                $"namespace {settings.GenerationNamespace}.Engine {{"
+                $"namespace {settings.Namespace} {{"
             );
 
             importerClass.Indent();
@@ -158,7 +166,7 @@ namespace BunBundle.Model {
             importerClass.Unindent();
             importerClass.AddLine("}");
 
-            string targetFileName = Path.Combine(fullTargetFolder, "Generated", "SpriteLibrary.cs");
+            string targetFileName = Path.Combine(fullTargetFolder, settings.TargetFilePath);
 
             if (!Directory.Exists(Path.GetDirectoryName(targetFileName))) {
                 Directory.CreateDirectory(Path.GetDirectoryName(targetFileName) ?? throw new FileNotFoundException("Invalid path"));
@@ -222,7 +230,7 @@ namespace BunBundle.Model {
 
             
             if (isRoot) {
-                importerClass.AddLine($"public static partial class {settings.GenerationClassName} {{");
+                importerClass.AddLine($"public static partial class {settings.ClassName} {{");
             }
             else {
                 importerClass.AddLine($"public class {Groupify(folder.Name)} {{");

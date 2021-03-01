@@ -6,7 +6,7 @@ namespace MonogameTexturePackerConsole {
     class Program {
         static void Main(string[] args) {
             if (args.Length == 0) {
-                Console.WriteLine("Usage: BunBundle sprmFile/folder");
+                Console.WriteLine("Usage: BunBundle path/to/file.bubu");
                 return;
             }
 

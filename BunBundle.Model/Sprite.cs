@@ -208,40 +208,38 @@ namespace BunBundle.Model {
 
 
         private record SpriteJson {
-            public SpriteJson(Origin origin, string texturePage, string[] images) {
-                this.origin = origin;
-                this.texturePage = texturePage;
-                this.images = images;
+            public SpriteJson(OriginRecord origin, string texturePage, string[] images) {
+                this.Origin = origin;
+                this.TexturePage = texturePage;
+                this.Images = images;
             }
 
-            public record Origin(float x, float y);
-            public Origin origin { get; }
-            public string texturePage { get; }
-            public string[] images { get; }
+            public record OriginRecord(float X, float Y);
+            public OriginRecord Origin { get; set; }
+            public string TexturePage { get; set; }
+            public string[] Images { get; set; }
         }
         
         [MemberNotNull(nameof(imagePaths))]
         public void Load() {
-            SpriteJson? obj = JsonSerializer.Deserialize<SpriteJson>(File.ReadAllText(MetaFile));
+            SpriteJson? obj = JsonSerializer.Deserialize<SpriteJson>(File.ReadAllText(MetaFile), JsonSettings.GetSerializeOptions());
             if (obj == null) {
                 throw new Exception("Failed to load JSON");
             }
-            imagePaths = obj.images;
-            _originX = obj.origin.x;
-            _originY = obj.origin.y;
+            imagePaths = obj.Images;
+            _originX = obj.Origin.X;
+            _originY = obj.Origin.Y;
         }
 
         public void Save() {
             var obj = new SpriteJson(
-                origin: new SpriteJson.Origin(OriginX, OriginY),
+                origin: new(OriginX, OriginY),
                 texturePage: "default",
                 images: ImagePaths.Select(x => Path.GetFileName(x)).ToArray()
             );
 
-            JsonSerializerOptions options = new JsonSerializerOptions
-                {WriteIndented = true, PropertyNamingPolicy = new JsonSnakeCaseifier()};
-            
-            File.WriteAllText(MetaFile, JsonSerializer.Serialize(obj, options), Encoding.UTF8);
+
+            File.WriteAllText(MetaFile, JsonSerializer.Serialize(obj, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
         }
 
 

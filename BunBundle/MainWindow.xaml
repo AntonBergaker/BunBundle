@@ -253,7 +253,7 @@
                     </Style>
                 </Menu.ItemContainerStyle>
                 <MenuItem Header="_File" ItemContainerStyle="{StaticResource DropdownStyle}">
-                    <MenuItem Header="New..." Margin="0, -16, 0, 0"/>
+                    <MenuItem Header="New..." Margin="0, -16, 0, 0" Click="MenuNewProject_OnClick"/>
                     <MenuItem Header="Open..." Margin="0, 0, 0, 0" Click="MenuOpenFolder_OnClick"/>
                     <MenuItem Header="Open Recent" Margin="0, 0, 0, 0" 
                               Style="{StaticResource DropdownStyle}"

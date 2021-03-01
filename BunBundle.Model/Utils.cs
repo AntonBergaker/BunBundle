@@ -22,20 +22,6 @@ namespace BunBundle.Model {
             return new string(chars);
         }
 
-        public static string GeneratePath(IWorkspaceItem item) {
-            StringBuilder sb = new StringBuilder();
-
-            bool first = true;
-            while (item.Parent != null) {
-                sb.Insert(0, item.Name + (first ? "" : Path.DirectorySeparatorChar.ToString()));
-                first = false;
-                item = item.Parent;
-            }
-
-            // Item should now be root
-            return Path.Combine(item.Storage.Path, sb.ToString());
-        }
-
 
         public static string PascalToSnakecase(string pascal) {
             StringBuilder sb = new StringBuilder(pascal.Length + pascal.Length / 4 + 1);
