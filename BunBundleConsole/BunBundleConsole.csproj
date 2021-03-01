@@ -7,9 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+    <ProjectReference Include="..\BunBundle.Model\BunBundle.Model.csproj" />
   </ItemGroup>
-
-  <Import Project="..\BunBundle.Model\BunBundle.Model.projitems" Label="Shared" />
 
 </Project>

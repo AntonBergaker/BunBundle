@@ -16,7 +16,10 @@
   <ItemGroup>
     <PackageReference Include="gong-wpf-dragdrop" Version="2.3.2" />
     <PackageReference Include="MaterialDesignThemes" Version="4.0.0" />
-    <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BunBundle.Model\BunBundle.Model.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,8 +41,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-
-  <Import Project="..\BunBundle.Model\BunBundle.Model.projitems" Label="Shared" />
 
 
 </Project>
