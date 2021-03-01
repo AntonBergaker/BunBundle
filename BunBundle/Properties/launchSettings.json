@@ -1,8 +1,7 @@
 {
   "profiles": {
     "BunBundle": {
-      "commandName": "Project",
-      "commandLineArgs": "C:/Autocute/Sprites"
+      "commandName": "Project"
     }
   }
 }

@@ -16,7 +16,8 @@
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="{DynamicResource MaterialDesignFont}" Icon="/pack.ico"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Icon="/pack.ico"
 >
 <Window.Resources>
     <local:ObjectToTypeStringConverter x:Key="ObjectToTypeStringConverter"></local:ObjectToTypeStringConverter>
@@ -24,6 +25,11 @@
     <SolidColorBrush x:Key="AccentColor" Color="#FF6D00" />
     <SolidColorBrush x:Key="DisabledAccentColor" Color="#66BB4D00" />
     <SolidColorBrush x:Key="PrimaryColor" Color="#2196F3" />
+
+    <Style x:Key="DropdownStyle" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"></Setter>
+    </Style>
     </Window.Resources>
 
     <Grid>
@@ -66,14 +72,15 @@
                                                 <Style.Triggers>
 
                                                     <DataTrigger Binding="{Binding Path=IsUsed}" Value="True">
-                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{DynamicResource SecondaryAccentBrush}" />
+                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{StaticResource AccentColor}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Path=IsUsed}" Value="False">
-                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{DynamicResource SecondaryAccentBrush}" />
+                                                        <Setter Property="materialDesign:PackIcon.Foreground" Value="{StaticResource AccentColor}" />
                                                         <Setter Property="materialDesign:PackIcon.Opacity" Value="0.4" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Path=., Converter={StaticResource ObjectToTypeStringConverter}}" Value="FolderViewModel">
                                                         <Setter Property="materialDesign:PackIcon.Kind" Value="Folder" />
+
                                                     </DataTrigger>
 
                                                     <DataTrigger Binding="{Binding Path=., Converter={StaticResource ObjectToTypeStringConverter}}" Value="SpriteViewModel">
@@ -237,31 +244,34 @@
             </Grid>
         </Grid>
         <materialDesign:ColorZone Mode="PrimaryDark">
-            <Menu IsMainMenu="True" Background="{DynamicResource PrimaryHueDarkBrush}">
+            <Menu IsMainMenu="True" Background="Transparent">
                 <Menu.ItemContainerStyle>
                     <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
                         <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Background" Value="{StaticResource PrimaryHueDarkBrush}"/>
                         <Setter Property="Foreground" Value="White"></Setter>
                     </Style>
                 </Menu.ItemContainerStyle>
-                <MenuItem Header="_File">
+                <MenuItem Header="_File" ItemContainerStyle="{StaticResource DropdownStyle}">
+                    <MenuItem Header="New..." Margin="0, -16, 0, 0"/>
+                    <MenuItem Header="Open..." Margin="0, 0, 0, 0" Click="MenuOpenFolder_OnClick"/>
+                    <MenuItem Header="Open Recent" Margin="0, 0, 0, 0" 
+                              Style="{StaticResource DropdownStyle}"
+                              ItemsSource="{Binding Path=RecentProjects, RelativeSource={RelativeSource AncestorType=Window}}">
                     <MenuItem.ItemContainerStyle>
-                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                            <Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"></Setter>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource DropdownStyle}">
+                            <EventSetter Event="Click" Handler="RecentProject_OnClick"/>
                         </Style>
                     </MenuItem.ItemContainerStyle>
-                    <MenuItem Header="Open Folder..." Margin="0, -16, 0, 0" Click="MenuOpenFolder_OnClick"/>
+                    </MenuItem>
                     <MenuItem Header="Save" Margin="0, 0, 0, -16" Click="MenuSave_OnClick"/>
                 </MenuItem>
-                <MenuItem Header="View">
-                    <MenuItem.ItemContainerStyle>
-                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                            <Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"></Setter>
-                        </Style>
-                    </MenuItem.ItemContainerStyle>
+                <MenuItem Header="View" ItemContainerStyle="{StaticResource DropdownStyle}">
                     <MenuItem Header="Dark Theme" Margin="0, -16, 0, -16" Click="MenuToggleDarkMode_OnClick" IsCheckable="True" IsChecked="{Binding Path=IsDarkMode, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"/>
+                </MenuItem>
+                <MenuItem Header="Project" ItemContainerStyle="{StaticResource DropdownStyle}"
+                          Visibility="{Binding Path=AnyVisibility, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <MenuItem Header="Project Settings" Margin="0, -16, 0, -16" Click="MenuProjectSettings_OnClick"/>
                 </MenuItem>
             </Menu>
         </materialDesign:ColorZone>

@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -10,11 +8,17 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BunBundle.Model {
     class Builder {
+        private Settings settings;
 
+        public Builder(Settings settings) {
+            this.settings = settings;
+        }
+        
         /// <summary>
         /// Resize the image to the specified width and height.
         /// </summary>
@@ -46,8 +50,14 @@ namespace BunBundle.Model {
 
 
 
-        public void Build(WorkspaceFolder workspaceFolder, string rootFolder, string targetFolder) {
-            string fullTargetFolder = Path.Combine(rootFolder, targetFolder);
+        public void Build(WorkspaceFolder workspaceFolder, string rootFolder) {
+            string fullTargetFolder;
+            if (Path.IsPathFullyQualified(settings.TargetSpriteDirectory)) {
+                fullTargetFolder = settings.TargetSpriteDirectory;
+            }
+            else {
+                fullTargetFolder = Path.Combine(rootFolder, settings.TargetSpriteDirectory);
+            }
 
             string cacheFolder = Path.GetFullPath(Path.Combine(rootFolder, "..", "__build_cache"));
 
@@ -86,7 +96,7 @@ namespace BunBundle.Model {
                     Bitmap resizedImage = ResizeImage(image, Math.Max(1 ,(int)width), Math.Max(1, (int)height));
                     string path = Path.Combine(cacheFolder, mips[i], spriteData.LocalPath);
                     if (!Directory.Exists(Path.GetDirectoryName(path))) {
-                        Directory.CreateDirectory(Path.GetDirectoryName(path));
+                        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new FileNotFoundException("Invalid path"));
                     }
                     resizedImage.Save(path);
                     resizedImage.Dispose();
@@ -128,8 +138,8 @@ namespace BunBundle.Model {
 
             mgcbInfo.UseShellExecute = false;
             // Run the exporter
-            Process processMgcb = Process.Start(mgcbInfo);
-            processMgcb.WaitForExit();
+            Process? processMgcb = Process.Start(mgcbInfo);
+            processMgcb?.WaitForExit();
 
             // Build the importer class
 
@@ -138,7 +148,7 @@ namespace BunBundle.Model {
             importerClass.AddLines(
                 "using Microsoft.Xna.Framework;",
                 "using Microsoft.Xna.Framework.Content;",
-                "namespace Autocute.Engine {"
+                $"namespace {settings.GenerationNamespace}.Engine {{"
             );
 
             importerClass.Indent();
@@ -151,7 +161,7 @@ namespace BunBundle.Model {
             string targetFileName = Path.Combine(fullTargetFolder, "Generated", "SpriteLibrary.cs");
 
             if (!Directory.Exists(Path.GetDirectoryName(targetFileName))) {
-                Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
+                Directory.CreateDirectory(Path.GetDirectoryName(targetFileName) ?? throw new FileNotFoundException("Invalid path"));
             }
 
             File.WriteAllText(targetFileName, importerClass.ToString());
@@ -185,14 +195,14 @@ namespace BunBundle.Model {
                     string newTargetPath = Path.Combine(folderPath, Path.GetFileName(fullPath));
                     string localPath = Path.Combine(path, Path.GetFileName(fullPath));
 
-                    SpriteExportData data = new SpriteExportData {
-                        SourcePath = fullPath,
-                        FilePath = newTargetPath,
-                        LocalPath = localPath,
-                        Name = Path.GetFileName(fullPath),
-                        Hash = sourceHash,
-                        IsCached = isCached
-                    };
+                    SpriteExportData data = new SpriteExportData(
+                        SourcePath: fullPath,
+                        FilePath: newTargetPath,
+                        LocalPath: localPath,
+                        Name: Path.GetFileName(fullPath),
+                        Hash: sourceHash,
+                        IsCached: isCached
+                    );
 
                     exportSprites.Add(fullPath, data);
 
@@ -207,12 +217,12 @@ namespace BunBundle.Model {
             }
 
             string Groupify(string folderName) {
-                return Utils.FirstLetterToUpper(folderName) + "Group";
+                return "_Group" + Utils.FirstLetterToUpper(folderName);
             }
 
             
             if (isRoot) {
-                importerClass.AddLine("public static partial class Sprites {");
+                importerClass.AddLine($"public static partial class {settings.GenerationClassName} {{");
             }
             else {
                 importerClass.AddLine($"public class {Groupify(folder.Name)} {{");
@@ -322,8 +332,7 @@ namespace BunBundle.Model {
 
             try {
                 string json = File.ReadAllText(path);
-
-                return JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                return JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
 
             } catch { }
             return new Dictionary<string, string>();
@@ -331,17 +340,17 @@ namespace BunBundle.Model {
 
         private void SaveImageHashes(string cacheFolder, Dictionary<string, string> dict) {
             string path = Path.Combine(cacheFolder, "hashes.json");
-            File.WriteAllText(path, JsonConvert.SerializeObject(dict));
+            File.WriteAllText(path, JsonSerializer.Serialize(dict));
         }
 
-        private class SpriteExportData {
-            public string SourcePath;
-            public string FilePath;
-            public string LocalPath;
-            public string Name;
-            public string Hash;
-            public bool IsCached;
-        }
+        private record SpriteExportData(
+            string SourcePath,
+            string FilePath,
+            string LocalPath,
+            string Name,
+            string Hash,
+            bool IsCached
+        );
 
     }
 }

@@ -1,19 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Windows;
-using BunBundle.Annotations;
-using BunBundle.Model;
+﻿using BunBundle.Model;
 using BunBundle.ViewModels;
 using GongSolutions.Wpf.DragDrop;
+using System;
+using System.Collections.ObjectModel;
+using System.Windows;
+using BunBundle.Annotations;
 
 namespace BunBundle {
     public class SpriteViewModel : TreeItemViewModel, IDropTarget {
 
         public readonly Sprite Sprite;
+
+        private FolderViewModel parent;
+        
+        public override FolderViewModel Parent {
+            get => parent;
+#pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+            set => parent = value ?? throw new ArgumentNullException(nameof(value), "Parent can not be null for a sprite");
+#pragma warning restore CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+        }
 
         public override bool IsUsed => true;
 
@@ -22,7 +27,7 @@ namespace BunBundle {
             set {}
         }
 
-        public override ObservableCollection<TreeItemViewModel> Items => null;
+        public override ObservableCollection<TreeItemViewModel>? Items => null;
 
         public override bool IsExpanded {
             get => false;
@@ -54,7 +59,7 @@ namespace BunBundle {
 
         public SpriteViewModel(Sprite sprite, FolderViewModel parent) {
             Sprite = sprite;
-            Parent = parent;
+            this.parent = parent;
 
             SubImages = new ObservableCollection<SubImageViewModel>();
             for (int i=0; i < sprite.ImageAbsolutePaths.Count; i++) {

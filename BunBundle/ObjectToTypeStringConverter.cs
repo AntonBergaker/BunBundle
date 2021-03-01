@@ -5,9 +5,9 @@ using System.Windows.Data;
 
 namespace BunBundle {
     public class ObjectToTypeStringConverter : IValueConverter {
-        public object Convert(
-            object value, Type targetType,
-            object parameter, System.Globalization.CultureInfo culture) {
+        public object? Convert(
+            object? value, Type targetType,
+            object? parameter, System.Globalization.CultureInfo culture) {
             return value?.GetType().Name;
         }
 

@@ -96,7 +96,7 @@ namespace BunBundle {
         }
 
         public override void MoveTo(FolderViewModel target) {
-            Parent.RemoveChild(this);
+            Parent?.RemoveChild(this);
             Parent = target;
 
             Folder.MoveTo(target.Folder);

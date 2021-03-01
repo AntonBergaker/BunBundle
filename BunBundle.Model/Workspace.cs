@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using BunBundle.Model.Saving;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace BunBundle.Model {
     public class Workspace {
-        private string basePath;
-        private string targetFolder;
+        private Settings settings;
 
         public WorkspaceFolder RootFolder { protected set; get; }
 
@@ -18,20 +17,25 @@ namespace BunBundle.Model {
 
         public bool Unsaved => savingManager.UnsavedChanges;
 
-        private string SaveFilePath => Path.Combine(RootFolder.StorageFolder.Path, "sprites.sprm");
+        private string SaveFilePath => Path.Combine(RootFolder.StorageFolder.Path, "sprites.bubu");
 
 
 
         public Workspace(string path) {
+            savingManager = new SavingManager();
+
             if (File.Exists(path)) {
-                OpenFolder(Path.GetDirectoryName(path));
-            } else if (Directory.Exists(path)) {
-                OpenFolder(path);
-            }
+                string? dirname = Path.GetDirectoryName(path);
+                if (dirname == null) {
+                    throw new FileNotFoundException("Directory/File not found");
+                }
+
+                Open(path);
+            } 
             else {
                 throw new FileNotFoundException("Directory/File not found");
             }
-            savingManager = new SavingManager();
+
         }
 
 
@@ -39,22 +43,60 @@ namespace BunBundle.Model {
             return RootFolder.GetAllSprites().ToArray();
         }
 
+        [MemberNotNull(nameof(RootFolder))]
+        [MemberNotNull(nameof(settings))]
+        private void Open(string file) {
 
-        private void OpenFolder(string folder) {
-            string[] files = Directory.GetFiles(folder, "sprites.sprm");
-            if (files.Length >= 1) {
-                OpenProjectFile(files[0]);
+            OpenProjectFile(file);
+            
+            if (settings == null) {
+                settings = new Settings("", "", "", "");
+                Save();
             }
 
-            RootFolder = WorkspaceFolder.Import(folder, this);
+            RootFolder = WorkspaceFolder.Import(Path.GetDirectoryName(file)!, this);
         }
 
         private void OpenProjectFile(string file) {
-            JObject obj = JObject.Parse(File.ReadAllText(file));
-            targetFolder = obj.Value<string>("targetDirectory");
-            if (targetFolder != null) {
-                targetFolder = targetFolder.Replace('\\', Path.DirectorySeparatorChar);
+            string text;
+            try {
+                text = File.ReadAllText(file);
             }
+            catch (Exception ex) {
+                RaiseError(new Error(ex));
+                return;
+            }
+
+            Settings? obj;
+            try {
+                obj = JsonSerializer.Deserialize<Settings>(text,
+                    JsonSettings.GetDeserializeOptions());
+            }
+            catch (Exception ex) {
+                RaiseError(new Error(ex));
+                return;
+            }
+
+            if (obj == null) {
+                RaiseError(new Error("Failed to read settings file"));
+                return;
+            }
+
+            settings = obj;
+        }
+
+        public void Save() {
+            JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = new JsonSnakeCaseifier() };
+            try {
+                File.WriteAllText(SaveFilePath, JsonSerializer.Serialize(settings, options), Encoding.UTF8);
+            }
+            catch (Exception ex) {
+                RaiseError(new Error(ex));
+            }
+
+            savingManager.RunActions();
+
+            RaiseUnsavedChanged();
         }
 
 
@@ -95,24 +137,16 @@ namespace BunBundle.Model {
 
         public void Build() {
 
-            Builder builder = new Builder();
+            Builder builder = new Builder(settings);
 
-            builder.Build(RootFolder, RootFolder.Storage.Path, targetFolder);
-
+            try {
+                builder.Build(RootFolder, RootFolder.Storage.Path);
+            }
+            catch (Exception ex) {
+                RaiseError(new Error(ex));
+            }
         }
 
-        public void Save() {
-
-            var obj = new {
-                targetDirectory = targetFolder
-            };
-
-            File.WriteAllText(SaveFilePath, JsonConvert.SerializeObject(obj), Encoding.UTF8);
-
-            savingManager.RunActions();
-            
-            RaiseUnsavedChanged();
-        }
 
         public void AddSaveAction(SaveAction saveAction) {
             savingManager.Add(saveAction);
@@ -121,24 +155,31 @@ namespace BunBundle.Model {
         }
 
 
-        public event EventHandler<(WorkspaceFolder parentFolder, Sprite sprite)> OnImportSprite;
+        public event EventHandler<(WorkspaceFolder parentFolder, Sprite sprite)>? OnImportSprite;
 
         private void RaiseImportSprite(WorkspaceFolder parentFolder, Sprite file) {
             OnImportSprite?.Invoke(this, (parentFolder, file));
         }
 
 
-        public event EventHandler<(WorkspaceFolder parentFolder, WorkspaceFolder folder)> OnAddFolder;
+        public event EventHandler<(WorkspaceFolder parentFolder, WorkspaceFolder folder)>? OnAddFolder;
 
         private void RaiseAddFolder(WorkspaceFolder parentFolder, WorkspaceFolder folder) {
             OnAddFolder?.Invoke(this, (parentFolder, folder));
         }
 
 
-        public event EventHandler<bool> OnUnsavedChanged;
+        public event EventHandler<bool>? OnUnsavedChanged;
 
         private void RaiseUnsavedChanged() {
             OnUnsavedChanged?.Invoke(this, Unsaved);
         }
+
+        public event EventHandler<Error>? OnError;
+
+        private void RaiseError(Error error) {
+            OnError?.Invoke(this, error);
+        }
     }
+
 }

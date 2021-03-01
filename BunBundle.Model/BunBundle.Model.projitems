@@ -11,6 +11,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Builder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CodeBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Error.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saving\SaveAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saving\SaveActionDelete.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saving\SaveActionImagesChanged.cs" />
@@ -23,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)WorkspaceFolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IWorkspaceItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saving\SaveActionRename.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Sprite.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Workspace.cs" />

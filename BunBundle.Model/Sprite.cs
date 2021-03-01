@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using BunBundle.Model.Saving;
 using BunBundle.Model.Storage;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace BunBundle.Model {
     public class Sprite : IWorkspaceItem {
@@ -18,7 +19,15 @@ namespace BunBundle.Model {
 
         public StorageSprite StorageSprite { get; }
 
-        public WorkspaceFolder Parent { get; set; }
+        private WorkspaceFolder parent;
+
+        public WorkspaceFolder Parent {
+            get => parent;
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+            set => parent = value ?? throw new ArgumentNullException(nameof(value), "Parent can not be null for a sprite");
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+        }
+        
 
         private string name;
 
@@ -101,7 +110,7 @@ namespace BunBundle.Model {
         public Sprite(string name, WorkspaceFolder parent) {
             this.name = name;
             StorageSprite = new StorageSprite(parent.StorageFolder, this);
-            this.Parent = parent;
+            this.parent = parent;
             Workspace = parent.Workspace;
             Load();
         }
@@ -111,27 +120,9 @@ namespace BunBundle.Model {
             StorageSprite = new StorageSprite(parent.StorageFolder, this);
             this.imagePaths = imagePaths;
             Workspace = parent.Workspace;
-            this.Parent = parent;
+            this.parent = parent;
         }
 
-        public void Load() {
-            JObject obj = JObject.Parse(File.ReadAllText(MetaFile));
-            JArray paths = (JArray) obj.GetValue("images");
-            imagePaths = paths.Select(x => (string) x).ToArray();
-            JObject pos = (JObject) obj["origin"];
-            _originX = (float) pos["x"];
-            _originY = (float) pos["y"];
-        }
-
-        public void Save() {
-            var obj = new {
-                origin = new {x = OriginX, y = OriginY},
-                texturePage = "default",
-                images = ImagePaths.Select(x => Path.GetFileName(x)).ToArray()
-            };
-
-            File.WriteAllText(MetaFile, JsonConvert.SerializeObject(obj), Encoding.UTF8);
-        }
 
         public void SetImagePath(int index, string path) {
             imagePaths[index] = path;
@@ -215,5 +206,46 @@ namespace BunBundle.Model {
             Workspace.AddSaveAction(new SaveActionMoved(this, targetFolder.StorageFolder));
         }
 
+
+        private record SpriteJson {
+            public SpriteJson(Origin origin, string texturePage, string[] images) {
+                this.origin = origin;
+                this.texturePage = texturePage;
+                this.images = images;
+            }
+
+            public record Origin(float x, float y);
+            public Origin origin { get; }
+            public string texturePage { get; }
+            public string[] images { get; }
+        }
+        
+        [MemberNotNull(nameof(imagePaths))]
+        public void Load() {
+            SpriteJson? obj = JsonSerializer.Deserialize<SpriteJson>(File.ReadAllText(MetaFile));
+            if (obj == null) {
+                throw new Exception("Failed to load JSON");
+            }
+            imagePaths = obj.images;
+            _originX = obj.origin.x;
+            _originY = obj.origin.y;
+        }
+
+        public void Save() {
+            var obj = new SpriteJson(
+                origin: new SpriteJson.Origin(OriginX, OriginY),
+                texturePage: "default",
+                images: ImagePaths.Select(x => Path.GetFileName(x)).ToArray()
+            );
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+                {WriteIndented = true, PropertyNamingPolicy = new JsonSnakeCaseifier()};
+            
+            File.WriteAllText(MetaFile, JsonSerializer.Serialize(obj, options), Encoding.UTF8);
+        }
+
+
+
     }
+
 }

@@ -28,8 +28,8 @@ namespace BunBundle {
         private Sprite? oldImportSprite;
         private string oldImportPath = "";
 
-        private double oldRedrawOriginX;
-        private double oldRedrawOriginY;
+        private float oldRedrawOriginX;
+        private float oldRedrawOriginY;
         private Sprite? oldRedrawSprite;
         private string oldRedrawPath = "";
 
@@ -71,6 +71,10 @@ namespace BunBundle {
             Point p = e.GetPosition(image);
             Point unscaled_p = new Point();
 
+            if (sprite == null) {
+                return new Point(0, 0);
+            }
+
             // image and container dimensions
             double w_i = this.sprite.Width;
             double h_i = this.sprite.Height; 
@@ -101,6 +105,10 @@ namespace BunBundle {
         }
 
         public void Redraw() {
+            if (sprite == null) {
+                return;
+            }
+            
             if (oldRedrawOriginX == sprite.OriginX && oldRedrawOriginY == sprite.OriginY
                                                    && oldRedrawSprite == sprite &&
                                                    oldRedrawPath == sprite.ImageAbsolutePaths[index]) {
@@ -118,7 +126,7 @@ namespace BunBundle {
             }
 
             if (redrawTask != null && redrawTask.IsCompleted == false) {
-                redrawCancelToken.Cancel();
+                redrawCancelToken?.Cancel();
                 redrawTask = null;
             }
 
@@ -231,7 +239,7 @@ namespace BunBundle {
                     image.Visibility = Visibility.Hidden;
 
                     if (imageImportImageTask != null && imageImportImageTask.IsCompleted == false) {
-                        this.imageImportCancelToken.Cancel();
+                        this.imageImportCancelToken?.Cancel();
                         imageImportImageTask = null;
                     }
 

@@ -12,7 +12,7 @@ namespace BunBundle {
     public class FilePathToImageConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             if (value?.GetType() != typeof(string) || targetType != typeof(ImageSource)) return false;
-            string filePath = value as string;
+            string? filePath = value as string;
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return DependencyProperty.UnsetValue;
             BitmapImage image = new BitmapImage();
             try {

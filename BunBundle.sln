@@ -11,9 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BunBundle", "BunBundle\BunB
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		BunBundle.Model\Common.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
-		BunBundle.Model\Common.projitems*{2ce86bdf-6965-4308-9a1c-794c9100cb77}*SharedItemsImports = 5
-		BunBundle.Model\Common.projitems*{69639f86-a25b-425d-9555-cc7587ca1873}*SharedItemsImports = 5
+		BunBundle.Model\BunBundle.Model.projitems*{1fec7127-480c-40b4-9e23-3612ff3956d1}*SharedItemsImports = 13
+		BunBundle.Model\BunBundle.Model.projitems*{2ce86bdf-6965-4308-9a1c-794c9100cb77}*SharedItemsImports = 5
+		BunBundle.Model\BunBundle.Model.projitems*{69639f86-a25b-425d-9555-cc7587ca1873}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

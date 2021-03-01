@@ -36,7 +36,7 @@ namespace BunBundle {
 
         public abstract bool HasSpriteChildren { get; set; }
 
-        public abstract ObservableCollection<TreeItemViewModel> Items { get; }
+        public abstract ObservableCollection<TreeItemViewModel>? Items { get; }
 
         public abstract bool IsExpanded { get; set; }
 
@@ -48,7 +48,7 @@ namespace BunBundle {
 
         public abstract void MoveTo(FolderViewModel target);
 
-        public FolderViewModel? Parent;
+        public virtual FolderViewModel? Parent { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

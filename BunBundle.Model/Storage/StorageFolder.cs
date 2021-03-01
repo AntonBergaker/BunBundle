@@ -51,7 +51,7 @@ namespace BunBundle.Model.Storage {
             }
 
             string oldPath = Path;
-            Parent.RemoveChild(this);
+            Parent?.RemoveChild(this);
             newParent.AddChild(this);
 
             Directory.Move(oldPath, Path);

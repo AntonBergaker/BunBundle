@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -10,13 +12,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using BunBundle.Annotations;
 using Microsoft.Win32;
 using BunBundle.Model;
 using MaterialDesignThemes.Wpf;
-using Ookii.Dialogs.Wpf;
 
 namespace BunBundle {
     /// <summary>
@@ -33,6 +32,7 @@ namespace BunBundle {
                     workspace.OnImportSprite += WorkspaceOnOnImportSprite;
                     workspace.OnAddFolder += WorkspaceOnOnAddFolder;
                     workspace.OnUnsavedChanged += WorkspaceOnOnUnsavedChanged;
+                    workspace.OnError += WorkspaceOnError;
                     PopulateTreeView();
                 }
 
@@ -54,6 +54,8 @@ namespace BunBundle {
 
         public SpriteViewModel? SelectedSprite => selectedItem as SpriteViewModel;
 
+        public ObservableCollection<string> RecentProjects { get; set; }
+
         public TreeItemViewModel? SelectedItem {
             get => selectedItem;
             set {
@@ -67,9 +69,9 @@ namespace BunBundle {
 
         //private List<PictureBox> subImages = null;
 
-        private FolderViewModel rootViewModel;
+        private FolderViewModel? rootViewModel;
 
-        public FolderViewModel RootViewModel {
+        public FolderViewModel? RootViewModel {
             get => rootViewModel;
             set {
                 rootViewModel = value;
@@ -89,10 +91,10 @@ namespace BunBundle {
 
         private bool preventRedraw;
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
@@ -102,24 +104,31 @@ namespace BunBundle {
             previewImageHandler = new PreviewImage(imagePreview);
 
             previewImageHandler.OnOriginSet += OnOriginSet;
-
-            //this.KeyPreview = true;
+            
             this.KeyDown += OnKeyDown;
 
             itemToViewModels = new Dictionary<IWorkspaceItem, TreeItemViewModel>();
-            //subImages = new List<PictureBox>();
 
             if (arguments.Length == 1) {
                 string path = arguments[0];
                 path = new FileInfo(path).FullName;
-                LoadFolder(path);
+                LoadFile(path);
             }
 
             preventRedraw = false;
 
 
             IsDarkMode = Settings.Default.IsDark;
-            ModifyTheme();
+            RecentProjects = new ObservableCollection<string>();
+            if (Settings.Default.RecentFiles != null) {
+                foreach (string? file in Settings.Default.RecentFiles) {
+                    if (file != null) {
+                        RecentProjects.Add(file);
+                    }
+                }
+
+                ModifyTheme();
+            }
         }
 
         private void WorkspaceOnOnUnsavedChanged(object? sender, bool unsaved) {
@@ -128,6 +137,10 @@ namespace BunBundle {
             } else {
                 this.Title = "BunBundle";
             }
+        }
+
+        private void WorkspaceOnError(object? sender, Error e) {
+            MessageBox.Show(e.ErrorMessage);
         }
 
         private void ModifyTheme() {
@@ -178,8 +191,19 @@ namespace BunBundle {
             Workspace?.Save();
         }
 
-        private void LoadFolder(string path) {
+        private void LoadFile(string path) {
+            if (Settings.Default.RecentFiles == null) {
+                Settings.Default.RecentFiles = new StringCollection();
+            }
+            // If there's an old one remove it
+            Settings.Default.RecentFiles.Remove(path);
+            Settings.Default.RecentFiles.Insert(0, path);
+            while (Settings.Default.RecentFiles.Count > 10) {
+                Settings.Default.RecentFiles.RemoveAt(10);
+            }
+            Settings.Default.Save();
             Workspace = new Workspace(path);
+
         }
 
         private void PopulateTreeView() {
@@ -340,12 +364,12 @@ namespace BunBundle {
             int wIndex = index % 3;
             int hIndex = index / 3;
 
-            selectedSprite.OriginX = (selectedSprite.Width) * wIndex / 2;
-            selectedSprite.OriginY = (selectedSprite.Height) * hIndex / 2;
+            selectedSprite.OriginX = ((selectedSprite.Width) * wIndex / 2f);
+            selectedSprite.OriginY = (selectedSprite.Height) * hIndex / 2f;
 
         }
 
-        private FolderViewModel GetSelectedFolder() {
+        private FolderViewModel? GetSelectedFolder() {
             switch (SelectedItem) {
                 case FolderViewModel folder:
                     return folder;
@@ -357,8 +381,12 @@ namespace BunBundle {
         }
 
         private void buttonNewFolder_Click(object sender, RoutedEventArgs e) {
+            FolderViewModel? folder = GetSelectedFolder();
+            if (folder == null) {
+                return;
+            }
 
-            Workspace?.CreateFolder(GetSelectedFolder().Folder);
+            Workspace?.CreateFolder(folder.Folder);
         }
 
         private OpenFileDialog MakeOpenSpritesDialog() {
@@ -373,7 +401,15 @@ namespace BunBundle {
             OpenFileDialog dialog = MakeOpenSpritesDialog();
 
             if (dialog.ShowDialog() == true) {
-                Workspace.ImportSprites(dialog.FileNames, GetSelectedFolder().Folder);
+                if (workspace == null) {
+                    return;
+                }
+
+                FolderViewModel? folder = GetSelectedFolder();
+                if (folder == null) {
+                    return;
+                }
+                Workspace?.ImportSprites(dialog.FileNames, folder.Folder);
             }
         }
 
@@ -411,12 +447,37 @@ namespace BunBundle {
 
         private void MenuOpenFolder_OnClick(object sender, RoutedEventArgs e) {
 
-            VistaFolderBrowserDialog dialog = new VistaFolderBrowserDialog();
-            
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Multiselect = false;
+            string fileType = "Bunbundle File (*.bubu)|*bubu";
+            dialog.Filter = fileType;
+            dialog.DefaultExt = fileType;
+
 
             if (dialog.ShowDialog() == true) {
-                Workspace = new Workspace(dialog.SelectedPath);
+                LoadFile(dialog.FileName);
             }
+        }
+
+        private void MenuProjectSettings_OnClick(object sender, RoutedEventArgs e) {
+            ProjectSettingsWindow window = new ProjectSettingsWindow();
+            window.Show();
+        }
+
+        private void RecentProject_OnClick(object sender, RoutedEventArgs e) {
+            string? project = (sender as MenuItem)?.Header as string;
+            if (project == null) {
+                return;
+            }
+
+            if (!File.Exists(project)) {
+                Settings.Default.RecentFiles.Remove(project);
+                Settings.Default.Save();
+                MessageBox.Show("Project was not found. Removing from recent.");
+                return;
+            }
+
+            LoadFile(project);
         }
 
         private void MenuToggleDarkMode_OnClick(object sender, RoutedEventArgs e) {
@@ -496,7 +557,7 @@ namespace BunBundle {
 
             // If i'm a folder, make sure I'm not dragging to a child of me
             if (source is FolderViewModel sourceFolder) {
-                FolderViewModel parent = targetFolder;
+                FolderViewModel? parent = targetFolder;
                 while (parent != null) {
                     if (parent == sourceFolder) {
                         return false;
@@ -513,7 +574,7 @@ namespace BunBundle {
                 return;
             }
 
-            FolderViewModel targetFolder;
+            FolderViewModel? targetFolder;
             switch (target) {
                 case FolderViewModel tFolder:
                     targetFolder = tFolder;
@@ -525,7 +586,9 @@ namespace BunBundle {
                     return;
             }
 
-            source.MoveTo(targetFolder);
+            if (targetFolder != null) {
+                source.MoveTo(targetFolder);
+            }
         }
 
         private void treeView_DragOver(object sender, DragEventArgs e) {
@@ -595,5 +658,6 @@ namespace BunBundle {
         }
 
         #endregion
+
     }
 }

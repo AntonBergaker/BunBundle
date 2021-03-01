@@ -8,7 +8,7 @@ namespace BunBundle.Model {
         string Name { get; set; }
         StorageItem Storage { get; }
 
-        WorkspaceFolder Parent { get; set; }
+        WorkspaceFolder? Parent { get; set; }
 
         public void Delete();
 

@@ -35,5 +35,31 @@ namespace BunBundle.Model {
             // Item should now be root
             return Path.Combine(item.Storage.Path, sb.ToString());
         }
+
+
+        public static string PascalToSnakecase(string pascal) {
+            StringBuilder sb = new StringBuilder(pascal.Length + pascal.Length / 4 + 1);
+            bool first = true;
+            foreach (char c in pascal) {
+                if (char.IsUpper(c)) {
+                    if (first == false) {
+                        sb.Append("_");
+                    }
+
+                    sb.Append(char.ToLower(c));
+                } else {
+                    sb.Append(c);
+                }
+
+                first = false;
+            }
+
+            return sb.ToString();
+        }
+
+        public static string SnakecaseToPascal(string snake) {
+            string[] split = snake.Split('_');
+            return string.Concat(split.Select(x => FirstLetterToUpper(x)));
+        }
     }
 }
