@@ -16,7 +16,7 @@ The tool was made for my own project and I only really made it public so some of
 You can download a compiled Windows binary from [releases](https://github.com/AntonBergaker/BunBundle/releases/latest).
 
 ### Setting up
-There's an example set up inside the [samples](https://github.com/AntonBergaker/BunBundle/tree/master/Samples/] which should work straight away. There's currently no GUI to set project settings so you'll have to modify the .bubu file directly to set the various values.
+There's an example set up inside the [samples](https://github.com/AntonBergaker/BunBundle/tree/master/Samples/) which should work straight away. There's currently no GUI to set project settings so you'll have to modify the .bubu file directly to set the various values.
 
 ## Contributing
 
