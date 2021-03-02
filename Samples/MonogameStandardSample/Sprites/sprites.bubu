@@ -1,0 +1,7 @@
+﻿{
+  "target_directory": "../MonogameStandardSample",
+  "target_sprite_directory": "content/Generated/",
+  "target_file_path": "SpriteLibrary.cs",
+  "class_name": "Sprites",
+  "namespace": "MonogameStandardSample"
+}

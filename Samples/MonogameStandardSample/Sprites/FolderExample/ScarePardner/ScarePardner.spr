@@ -1,0 +1,10 @@
+﻿{
+  "origin": {
+    "x": 265,
+    "y": 271
+  },
+  "texture_page": "default",
+  "images": [
+    "ScarePardner0.png"
+  ]
+}

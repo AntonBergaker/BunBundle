@@ -1,0 +1,10 @@
+﻿{
+  "origin": {
+    "x": 211,
+    "y": 296
+  },
+  "texture_page": "default",
+  "images": [
+    "ScareEyes0.png"
+  ]
+}
