@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using BunBundle.Model.Saving;
@@ -53,8 +52,8 @@ namespace BunBundle.Model {
                 StorageFolder = StorageFolder.MakeRoot(path, this);
             }
 
-            foreach (string dir in Directory.GetDirectories(path)) {
-                if (Directory.GetFiles(dir, "*.spr").Length > 0) {
+            foreach (string dir in workspace.Directory.GetDirectories(path)) {
+                if (workspace.Directory.GetFiles(dir, "*.spr").Length > 0) {
                     files.Add(new Sprite(System.IO.Path.GetFileName(dir), this));
                     continue;
                 }

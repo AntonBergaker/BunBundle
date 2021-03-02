@@ -8,7 +8,7 @@ namespace BunBundle.Model.Saving {
         public override IWorkspaceItem Item { get; }
         public string NewName { get; private set; }
 
-        public SaveActionRename(IWorkspaceItem item, string newName) {
+        public SaveActionRename(IWorkspaceItem item, string newName): base(item.Workspace) {
             Item = item;
             NewName = newName;
         }

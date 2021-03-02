@@ -8,7 +8,7 @@ namespace BunBundle.Model.Saving {
         private readonly StorageFolder newParent;
         public override IWorkspaceItem Item { get; }
 
-        public SaveActionMoved(IWorkspaceItem item, StorageFolder newParent) {
+        public SaveActionMoved(IWorkspaceItem item, StorageFolder newParent) : base(item.Workspace) {
             this.newParent = newParent;
             Item = item;
         }

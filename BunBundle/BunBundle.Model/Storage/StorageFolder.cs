@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace BunBundle.Model.Storage {
     public class StorageFolder : StorageItem {
@@ -42,7 +41,7 @@ namespace BunBundle.Model.Storage {
 
             string oldPath = Path;
             Name = newName;
-            Directory.Move(oldPath, Path);
+            Folder.Workspace.Directory.Move(oldPath, Path);
         }
 
         public override void Move(StorageFolder newParent) {
@@ -54,7 +53,7 @@ namespace BunBundle.Model.Storage {
             Parent?.RemoveChild(this);
             newParent.AddChild(this);
 
-            Directory.Move(oldPath, Path);
+            Folder.Workspace.Directory.Move(oldPath, Path);
         }
 
         public void AddChild(StorageItem child) {

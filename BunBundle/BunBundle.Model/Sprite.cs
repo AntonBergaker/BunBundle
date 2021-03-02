@@ -4,17 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using BunBundle.Model.Saving;
 using BunBundle.Model.Storage;
 
 namespace BunBundle.Model {
     public class Sprite : IWorkspaceItem {
-        public readonly Workspace Workspace;
+        public Workspace Workspace { get; }
         public StorageItem Storage => StorageSprite;
 
         public StorageSprite StorageSprite { get; }
@@ -74,7 +71,7 @@ namespace BunBundle.Model {
             if (_width != -1 || _height != -1) {
                 return;
             }
-            using Stream stream = File.OpenRead(ImageAbsolutePaths[0]);
+            using Stream stream = Workspace.File.OpenRead(ImageAbsolutePaths[0]);
             using Image image = Image.FromStream(stream, false, false);
             _width = image.Width;
             _height = image.Height;
@@ -145,7 +142,7 @@ namespace BunBundle.Model {
                 relativePaths[i] = Name + imageCount + ".png";
                 string targetPath = Path.Combine(StorageSprite.Path, "img", relativePaths[i]);
 
-                File.Copy(sourcePaths[i], targetPath, true);
+                Workspace.File.Copy(sourcePaths[i], targetPath, true);
             }
 
             this.imagePaths = ImagePaths.Concat(relativePaths).ToArray();
@@ -176,20 +173,21 @@ namespace BunBundle.Model {
 
         public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder) {
             string folder = Path.Combine(targetFolder.Storage.Path, name);
+            Workspace workspace = targetFolder.Workspace;
 
             string imageFolder = Path.Combine(folder, "img");
-            if (Directory.Exists(folder) == false) {
-                Directory.CreateDirectory(folder);
+            if (workspace.Directory.Exists(folder) == false) {
+                workspace.Directory.CreateDirectory(folder);
             }
 
-            if (Directory.Exists(imageFolder) == false) {
-                Directory.CreateDirectory(imageFolder);
+            if (workspace.Directory.Exists(imageFolder) == false) {
+                workspace.Directory.CreateDirectory(imageFolder);
             }
 
             string[] relativePaths = sourcePaths.Select((_, i) => name + i + ".png").ToArray();
             string[] imagePaths = sourcePaths.Select((_, i) => Path.Combine(folder, "img", relativePaths[i])).ToArray();
 
-            sourcePaths.Each((x, i) => File.Copy(x, imagePaths[i], true));
+            sourcePaths.Each((x, i) => workspace.File.Copy(x, imagePaths[i], true));
 
             Sprite spr = new Sprite(name, imagePaths, targetFolder);
             spr.Save();
@@ -222,7 +220,7 @@ namespace BunBundle.Model {
         
         [MemberNotNull(nameof(imagePaths))]
         public void Load() {
-            SpriteJson? obj = JsonSerializer.Deserialize<SpriteJson>(File.ReadAllText(MetaFile), JsonSettings.GetSerializeOptions());
+            SpriteJson? obj = JsonSerializer.Deserialize<SpriteJson>(Workspace.File.ReadAllText(MetaFile), JsonSettings.GetSerializeOptions());
             if (obj == null) {
                 throw new Exception("Failed to load JSON");
             }
@@ -239,7 +237,7 @@ namespace BunBundle.Model {
             );
 
 
-            File.WriteAllText(MetaFile, JsonSerializer.Serialize(obj, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
+            Workspace.File.WriteAllText(MetaFile, JsonSerializer.Serialize(obj, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
         }
 
 

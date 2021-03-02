@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿
 
 namespace BunBundle.Model.Storage {
     public class StorageSprite : StorageItem {
@@ -15,17 +12,17 @@ namespace BunBundle.Model.Storage {
             string oldName = Name;
             string oldPath = Path;
             Name = newName;
-            Directory.Move(oldPath, Path);
+            Sprite.Workspace.Directory.Move(oldPath, Path);
 
             string newImgDir = System.IO.Path.Combine(Path, "img");
 
-            File.Move(System.IO.Path.Combine(Path, oldName) + ".spr", System.IO.Path.Combine(Path, newName) + ".spr");
+            Sprite.Workspace.File.Move(System.IO.Path.Combine(Path, oldName) + ".spr", System.IO.Path.Combine(Path, newName) + ".spr");
 
             var absolutePaths = Sprite.ImageAbsolutePaths;
             for (int i = 0; i < absolutePaths.Count; i++) {
                 string newPath = newName + i + ".png";
                 Sprite.SetImagePath(i, newPath);
-                File.Move(absolutePaths[i], System.IO.Path.Combine(newImgDir, newPath));
+                Sprite.Workspace.File.Move(absolutePaths[i], System.IO.Path.Combine(newImgDir, newPath));
             }
         }
 
@@ -38,7 +35,7 @@ namespace BunBundle.Model.Storage {
             Parent?.RemoveChild(this);
             newParent.AddChild(this);
 
-            Directory.Move(oldPath, Path);
+            Sprite.Workspace.Directory.Move(oldPath, Path);
         }
 
         public StorageSprite(StorageFolder parent, Sprite sprite) : base(parent) {

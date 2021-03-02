@@ -11,7 +11,7 @@ namespace BunBundle.Model.Saving {
             // Blank on purpose, everything is saved inside manager on completion
         }
 
-        public SaveActionSave(Sprite sprite) {
+        public SaveActionSave(Sprite sprite):base(sprite.Workspace) {
             Sprite = sprite;
         }
     }

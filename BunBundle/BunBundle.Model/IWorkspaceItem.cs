@@ -6,8 +6,11 @@ using BunBundle.Model.Storage;
 namespace BunBundle.Model {
     public interface IWorkspaceItem {
         string Name { get; set; }
+        
         StorageItem Storage { get; }
 
+        Workspace Workspace { get; }
+        
         WorkspaceFolder? Parent { get; set; }
 
         public void Delete();

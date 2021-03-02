@@ -10,7 +10,7 @@ namespace BunBundle.Model.Saving {
 
         public override IWorkspaceItem Item => Sprite;
 
-        public SaveActionImagesChanged(Sprite sprite) {
+        public SaveActionImagesChanged(Sprite sprite): base(sprite.Workspace) {
             Sprite = sprite;
         }
         public override void Run(out bool shouldSave) {

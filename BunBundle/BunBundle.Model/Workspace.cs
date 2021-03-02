@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -10,6 +10,9 @@ using BunBundle.Model.Saving;
 namespace BunBundle.Model {
     public class Workspace {
         private Settings settings;
+        internal IFileSystem FileSystem;
+        internal IFile File;
+        internal IDirectory Directory;
 
         public WorkspaceFolder RootFolder { protected set; get; }
 
@@ -21,7 +24,11 @@ namespace BunBundle.Model {
 
 
 
-        public Workspace(string path) {
+        public Workspace(string path, IFileSystem? fileSystem = null) {
+            FileSystem = fileSystem ?? new FileSystem();
+            File = FileSystem.File;
+            Directory = FileSystem.Directory;
+
             savingManager = new SavingManager();
 
             if (File.Exists(path)) {
@@ -42,9 +49,9 @@ namespace BunBundle.Model {
 
 
 
-        public static void CreateNew(string path) {
+        public static void CreateNew(string path, IFile? fileSystem = null) {
             Settings settings = new Settings("", "content/Generated/", "Sprites.cs", "Sprites", "");
-            WriteSaveFile(path, settings);
+            WriteSaveFile(path, settings, fileSystem ?? new FileSystem().File);
         }
 
         [MemberNotNull(nameof(RootFolder))]
@@ -83,13 +90,13 @@ namespace BunBundle.Model {
             settings = obj;
         }
 
-        private static void WriteSaveFile(string path, Settings settings) {
-            File.WriteAllText(path, JsonSerializer.Serialize(settings, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
+        private static void WriteSaveFile(string path, Settings settings, IFile file) {
+            file.WriteAllText(path, JsonSerializer.Serialize(settings, JsonSettings.GetSerializeOptions()), Encoding.UTF8);
         }
         
         public void Save() {
             try {
-                WriteSaveFile(SaveFilePath, settings);
+                WriteSaveFile(SaveFilePath, settings, File);
             }
             catch (Exception ex) {
                 RaiseError(new Error(ex));

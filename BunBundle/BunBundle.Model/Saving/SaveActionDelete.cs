@@ -7,7 +7,7 @@ namespace BunBundle.Model.Saving {
     class SaveActionDelete : SaveAction {
         public override IWorkspaceItem Item { get; }
 
-        public SaveActionDelete(IWorkspaceItem item) {
+        public SaveActionDelete(IWorkspaceItem item): base(item.Workspace) {
             Item = item;
         }
 
