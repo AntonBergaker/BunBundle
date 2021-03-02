@@ -63,28 +63,13 @@ namespace BunBundle.Model {
         }
 
         private void ImportSettings(string file) {
-            string text;
-            try {
-                text = File.ReadAllText(file);
-            }
-            catch (Exception ex) {
-                RaiseError(new Error(ex));
-                return;
-            }
 
-            Settings? obj;
-            try {
-                obj = JsonSerializer.Deserialize<Settings>(text,
-                    JsonSettings.GetSerializeOptions());
-            }
-            catch (Exception ex) {
-                RaiseError(new Error(ex));
-                return;
-            }
+            string text = File.ReadAllText(file);
+
+            Settings? obj = JsonSerializer.Deserialize<Settings>(text, JsonSettings.GetSerializeOptions());
 
             if (obj == null) {
-                RaiseError(new Error("Failed to read settings file"));
-                return;
+                throw new JsonException("Failed to read settings file");
             }
 
             settings = obj;

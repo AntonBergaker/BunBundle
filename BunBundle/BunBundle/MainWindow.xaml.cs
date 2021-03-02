@@ -202,7 +202,12 @@ namespace BunBundle {
                 Settings.Default.RecentFiles.RemoveAt(10);
             }
             Settings.Default.Save();
-            Workspace = new Workspace(path);
+
+            try {
+                Workspace = new Workspace(path);
+            } catch (Exception ex) {
+                MessageBox.Show(ex.ToString());
+            }
 
         }
 
