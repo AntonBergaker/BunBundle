@@ -17,9 +17,9 @@
         FontFamily="{DynamicResource MaterialDesignFont}"
         >
     <Grid>
-        <TextBox HorizontalAlignment="Left" Margin="44,41,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
         <Button Style="{DynamicResource MaterialDesignFlatButton}" Content="CANCEL" Margin="0,0,153,10" HorizontalAlignment="Right" Width="125" Height="32" VerticalAlignment="Bottom"/>
         <Button Content="OK" Margin="0,0,10,10" HorizontalAlignment="Right" Width="125" Height="32" VerticalAlignment="Bottom"/>
+        <Label Content="Due to budget cuts, there's no nice GUI for the project settings. Please edit the *.bubu file manually." HorizontalAlignment="Left" Margin="38,44,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>
