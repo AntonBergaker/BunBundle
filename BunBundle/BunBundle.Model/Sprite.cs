@@ -189,7 +189,7 @@ namespace BunBundle.Model {
 
             sourcePaths.Each((x, i) => workspace.File.Copy(x, imagePaths[i], true));
 
-            Sprite spr = new Sprite(name, imagePaths, targetFolder);
+            Sprite spr = new Sprite(name, relativePaths, targetFolder);
             spr.Save();
 
             return spr;

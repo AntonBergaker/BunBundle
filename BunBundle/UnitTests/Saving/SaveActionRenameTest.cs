@@ -33,7 +33,7 @@ namespace UnitTests.Saving {
             
             // Check that the new name got updated
             Assert.IsTrue( fileSystem.File.Exists( "C:/Sprites/source2/source2.spr" ) );
-            Assert.IsTrue(fileSystem.File.Exists("C:/Sprites/source2/img/source2.png"));
+            Assert.IsTrue(fileSystem.File.Exists("C:/Sprites/source2/img/source20.png"));
         }
     }
 }
