@@ -378,6 +378,4 @@ monodroid*.msi
 *.cachefile
 *.dll
 
-Autocute/Autocute/Generated/
 __build_cache/
-Autocute/Autocute/Content/TempContent.mgcb
