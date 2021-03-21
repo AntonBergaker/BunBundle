@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BunBundle.Model {
-    static class Utils {
+    public static class Utils {
         public static void Each<T>(this IEnumerable<T> ie, Action<T, int> action) {
             int i = 0;
             foreach (var e in ie) action(e, i++);
@@ -21,6 +22,10 @@ namespace BunBundle.Model {
             return new string(chars);
         }
 
+        public static string ToFloatString(float value) {
+            string str = value.ToString(CultureInfo.InvariantCulture);
+            return str.Contains('.') ? str + "f" : str;
+        }
 
         public static string PascalToSnakecase(string pascal) {
             StringBuilder sb = new StringBuilder(pascal.Length + pascal.Length / 4 + 1);

@@ -278,7 +278,7 @@ namespace BunBundle.Model {
             foreach (Sprite spr in folder.files) {
                 importerClass.AddLine($"{Nameify(spr.Name)} = Sprites.MakeSprite(content, ");
                 importerClass.Indent();
-                importerClass.AddLine($"new Vector2({spr.OriginX}, {spr.OriginY}),");
+                importerClass.AddLine($"new Vector2({Utils.ToFloatString(spr.OriginX)}, {Utils.ToFloatString(spr.OriginY)}),");
                 for (int i = 0; i < spr.ImagePaths.Count; i++) {
                     importerClass.AddLine($"\"{(localPath == "" ? "" : localPath + "\\\\") + spr.Name}{i}\"{(i == spr.ImagePaths.Count - 1 ? "" : ",")}");
                 }
