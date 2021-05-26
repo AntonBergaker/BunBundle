@@ -170,8 +170,19 @@ namespace BunBundle.Model {
             Workspace.AddSaveAction(new SaveActionImagesChanged(this));
         }
 
+        public class SpriteCreationOptions {
+            public bool IsStrip { get; set; } = false;
 
-        public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder) {
+            public int StripCount { get; set; } = 1;
+        }
+
+        public static Sprite Create(string name, string[] sourcePaths, WorkspaceFolder targetFolder, SpriteCreationOptions? options = null) {
+            options ??= new SpriteCreationOptions();
+
+            if (options.IsStrip && sourcePaths.Length != 1) {
+                throw new ArgumentException("Trying to strip more than one image at the same time. That's weird.", nameof(sourcePaths));
+            }
+
             string folder = Path.Combine(targetFolder.Storage.Path, name);
             Workspace workspace = targetFolder.Workspace;
 
@@ -184,12 +195,32 @@ namespace BunBundle.Model {
                 workspace.Directory.CreateDirectory(imageFolder);
             }
 
-            string[] relativePaths = sourcePaths.Select((_, i) => name + i + ".png").ToArray();
-            string[] imagePaths = sourcePaths.Select((_, i) => Path.Combine(folder, "img", relativePaths[i])).ToArray();
+            int index = 0;
+            List<string> relativePaths = new();
 
-            sourcePaths.Each((x, i) => workspace.File.Copy(x, imagePaths[i], true));
+            foreach (string sourcePath in sourcePaths) {
 
-            Sprite spr = new Sprite(name, relativePaths, targetFolder);
+                if (options.IsStrip) {
+                    List<string> tempFullPaths = new();
+                    for (int i = 0; i < options.StripCount; i++) {
+                        string newPath = name + index++ + ".png";
+                        string fullNewPath = Path.Combine(folder, "img", newPath);
+                        tempFullPaths.Add(fullNewPath);
+                        relativePaths.Add(newPath);
+                    }
+
+                    ImageManipulator.StripImage(sourcePath, options.StripCount, tempFullPaths);
+                } else {
+                    string newPath = name + index++ + ".png";
+                    string fullNewPath = Path.Combine(folder, "img", newPath);
+
+                    workspace.File.Copy(sourcePath, fullNewPath);
+
+                    relativePaths.Add(newPath);
+                }
+            }
+
+            Sprite spr = new Sprite(name, relativePaths.ToArray(), targetFolder);
             spr.Save();
 
             return spr;

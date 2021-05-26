@@ -5,6 +5,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using BunBundle.Model.Saving;
 
 namespace BunBundle.Model {
@@ -96,9 +97,18 @@ namespace BunBundle.Model {
         public void ImportSprites(string[] paths, WorkspaceFolder target) {
             // Copy the file into the folder
 
+            Sprite.SpriteCreationOptions options = new();
             string newName = Path.GetFileNameWithoutExtension(paths[0]);
+            int lastIndexOfStrip = newName.LastIndexOf("_strip", StringComparison.Ordinal);
+            if (paths.Length == 1 && lastIndexOfStrip >= 0) {
+                if (int.TryParse(newName[(lastIndexOfStrip + 6)..], out int count)) {
+                    newName = newName[..lastIndexOfStrip];
+                    options.IsStrip = true;
+                    options.StripCount = count;
+                }
+            }
 
-            Sprite spr = Sprite.Create(newName, paths, target);
+            Sprite spr = Sprite.Create(newName, paths, target, options);
 
             target.files.Add(spr);
 
